@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "LetSpær",
+  "version": "0.5",
+  "description": "Spærring af irrelevante sider i elevernes browser",
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "scripting",
+    "storage.managed"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "storage": {
+    "managed_schema": "schema.json"
+  }
+}

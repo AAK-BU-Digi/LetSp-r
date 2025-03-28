@@ -1,0 +1,15 @@
+services:
+  opencloud-rolling:
+    container_name: opencloud
+    volumes:
+      - /<local_directory_for_data>:/var/lib/opencloud
+      - /<local_directory_for_config>:/etc/opencloud
+    image: opencloudeu/opencloud-rolling
+    ports:
+      - 9200:9200
+    entrypoint:
+      - /bin/sh
+    command: ["-c", "opencloud init --insecure true || true; opencloud server"]
+    environment:
+      IDM_CREATE_DEMO_USERS: true
+      OC_URL: https://<your_docker_ip>:9200

@@ -1,0 +1,8 @@
+{
+  "sheetMode": { "Value": "daily" },
+  "dailyCsvUrl": { "Value": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTaR0Dixti0EuuFfsaLUeJPlqKTk4uTQPbTiyiq4rrmVnuYSfsghNaG_1eSM7PBMrkV-jjNzh7wuQBz/pub?gid=634859322&single=true&output=csv" },
+  "examCsvUrl": { "Value": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTaR0Dixti0EuuFfsaLUeJPlqKTk4uTQPbTiyiq4rrmVnuYSfsghNaG_1eSM7PBMrkV-jjNzh7wuQBz/pub?gid=934237405&single=true&output=csv" },
+  "blockedPageMode": { "Value": "internal" },
+  "blockedPageUrl": { "Value": "https://eksempel.dk/tilpasset_blokeret_side.html" },
+  "updateInterval": { "Value": 3600000 }
+}

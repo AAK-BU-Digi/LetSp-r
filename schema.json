@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "properties": {
+    "sheetMode": {
+      "type": "string",
+      "enum": ["daily", "exam"],
+      "description": "Vælg tilstand for blokerede websteder (daglig eller eksamen)."
+    },
+    "dailyCsvUrl": {
+      "type": "string",
+      "description": "URL til CSV-fil for daglig blokering."
+    },
+    "examCsvUrl": {
+      "type": "string",
+      "description": "URL til CSV-fil for eksamensblokering."
+    }
+    "blockedPageMode": {
+      "type": "string",
+      "enum": ["internal", "external"],
+      "description": "Vælg tilstand for blokeret side (indbygget eller ekstern)."
+    },
+    "blockedPageUrl": {
+      "type": "string",
+      "description": "URL til ekstern blokeret side."
+    },
+    "updateInterval": {
+      "type": "integer",
+      "description": "Opdateringsinterval i millisekunder."
+  }
+}
