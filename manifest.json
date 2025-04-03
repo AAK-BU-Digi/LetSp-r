@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LetSpær",
-  "version": "0.5",
+  "version": "0.7",
   "description": "Spærring af irrelevante sider i elevernes browser",
   "permissions": [
     "webRequest",
