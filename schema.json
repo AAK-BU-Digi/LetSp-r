@@ -13,7 +13,7 @@
     "examCsvUrl": {
       "type": "string",
       "description": "URL til CSV-fil for eksamensblokering."
-    }
+    },
     "blockedPageMode": {
       "type": "string",
       "enum": ["internal", "external"],
@@ -27,4 +27,5 @@
       "type": "integer",
       "description": "Opdateringsinterval i millisekunder."
   }
+ }
 }
