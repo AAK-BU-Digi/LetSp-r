@@ -61,7 +61,10 @@ chrome.webRequest.onBeforeRequest.addListener(function(details) {
 
 function isBlocked(url) {
   for (let site of blockedSites) {
-    if (url.includes(site)) {
+    // Erstat '*' med et regex-wildcard
+    let regexSite = site.replace(/\*/g, '.*');
+    let regex = new RegExp(regexSite);
+    if (regex.test(url)) {
       return true;
     }
   }
