@@ -1,0 +1,33 @@
+**User Privacy Policy for LetSpær**
+
+**Effective Date:** 10-04-2025
+
+This privacy policy describes how the LetSpær Chrome extension ("the Extension") collects, uses, and protects user data.
+
+**1. Data Collection and Use:**
+
+The Extension primarily functions to block access to specified websites based on lists retrieved from publicly accessible CSV files. The Extension does not directly collect personal or sensitive user data.
+
+* **Website Blocking Lists:** The Extension retrieves website blocking lists from CSV files hosted at URLs configured through Google Admin console. These CSV files are publicly accessible and do not contain personal user data.
+* **Configuration Data:** The Extension stores configuration data, such as CSV file URLs and blocking mode, through Google Admin console. This data is managed by the organization's administrator and is not directly collected from individual users.
+* **URL Handling:** The Extension processes URLs to determine if they should be blocked. While URLs may contain information about user browsing activity, the Extension does not store or transmit this data beyond the necessary processing for website blocking.
+
+**2. Data Storage:**
+
+The Extension does not store personal or sensitive user data locally or remotely. Configuration data is stored and managed through Google Admin console.
+
+**3. Data Sharing:**
+
+The Extension does not share user data with third parties.
+
+**4. Security:**
+
+The Extension implements reasonable security measures to protect data from unauthorized access, use, or disclosure. However, no method of transmission over the Internet or method of electronic storage is 100% secure.
+
+**5. Changes to This Privacy Policy:**
+
+We may update this privacy policy from time to time. We will notify you of any changes by posting the new privacy policy on this page.
+
+**6. Contact Us:**
+
+If you have any questions about this privacy policy, please contact us at digitalisering@mbu.aarhus.dk.
