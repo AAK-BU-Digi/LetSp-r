@@ -2,12 +2,11 @@
    "update_url":"https://clients2.google.com/service/update2/crx",
    "manifest_version":3,
    "name":"LetSpær",
-   "version":"0.9",
+   "version":"0.9.2",
    "description":"Spærring af irrelevante sider i elevernes browser",
    "permissions":[
       "webRequest",
       "webRequestBlocking",
-      "scripting",
       "storage.managed"
    ],
    "background":{
