@@ -14,7 +14,7 @@ const CONFIG = {
 };
 
 // Ekstra sikkerhed: Stop omgående hvis vi ikke er på Google
-// (Selvom manifestet styrer det, er dette en god "fail-safe")
+// (da det ikke styres af Manifest)
 (function safetyCheck() {
   const host = location.hostname;
   const isGoogle = host.includes("google.") || host.endsWith("google.com") || host.endsWith("google.dk");
