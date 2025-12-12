@@ -1,29 +1,28 @@
 {
-   "update_url":"https://clients2.google.com/service/update2/crx",
-   "manifest_version":3,
-   "name":"LetSpær",
-   "version":"0.10",
-   "description":"Spærring af irrelevante sider i elevernes browser",
-   "permissions":[
-      "webRequest",
-      "webRequestBlocking",
-      "storage.managed"
-   ],
-   "background":{
-      "service_worker":"background.js"
-   },
-   "storage":{
-      "managed_schema":"schema.json"
-   },
-   "host_permissions":[
-      "<all_urls>"
-   ],
-   "content_scripts": [
+  "update_url": "https://clients2.google.com/service/update2/crx",
+  "manifest_version": 3,
+  "name": "LetSpær",
+  "version": "1.0",
+  "description": "Spærring af irrelevante sider i elevernes browser",
+  "permissions": [
+    "storage.managed",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "storage": {
+    "managed_schema": "schema.json"
+  },
+  "content_scripts": [
     {
       "matches": [
         "<all_urls>"
       ],
-      "js": ["ai-mode-block.js"], 
+      "js": ["ai-mode-block.js"],
       "run_at": "document_start"
     }
   ]
