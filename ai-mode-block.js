@@ -1,141 +1,95 @@
-// =============== CONFIG & SIKKERHED ===============
-const CONFIG = {
-  // Vi tillader scriptet at køre, men tjekker en ekstra gang for en sikkerheds skyld
-  allowedHosts: ["google.com", "google.dk", "www.google.com", "www.google.dk"],
-  // CSS-selektorer til AI-indhold (opdateret liste)
-  aiSelectors: [
-    'div.hdzaWe',
-    'div[jsname="yDeuDf"]',
-    'div[data-attrid="ai_overview"]',
-    'div[aria-label="AI Overview"]',
-    'div[aria-label="AI-oversigt"]',
-    'a[href*="/search?"][role="button"]' // Generisk AI-knap fangst
-  ]
-};
+// ai-mode-block.js
 
-// Ekstra sikkerhed: Stop omgående hvis vi ikke er på Google
-// (da det ikke styres af Manifest)
-(function safetyCheck() {
+// =============== SIKKERHEDS-VENTIL ===============
+// Da manifestet nu siger <all_urls>, kører dette script på ALLE hjemmesider.
+// Vi skal stoppe scriptet STRAKS, hvis vi ikke er på Google, for ikke at sløve andre sider.
+(function failFast() {
   const host = location.hostname;
-  const isGoogle = host.includes("google.") || host.endsWith("google.com") || host.endsWith("google.dk");
-  if (!isGoogle) return; // Stop scriptet her
+  // Tjekker om "google" indgår i domænet (f.eks. google.com, google.co.jp, google.dk)
+  if (!host.includes("google")) return; // STOP HER
+  
+  // Hvis vi er her, er det en Google-side. Start "LetSpær" logikken.
+  initLetSpaer();
 })();
 
-console.log("LetSpær: Google Focus Mode aktiveret");
+function initLetSpaer() {
+  console.log("LetSpær: Google Focus Mode aktiveret på", location.hostname);
 
-// =============== HJÆLPERE ===============
+  const CONFIG = {
+    aiSelectors: [
+      'div.hdzaWe',
+      'div[jsname="yDeuDf"]',
+      'div[data-attrid="ai_overview"]',
+      'div[aria-label="AI Overview"]',
+      'div[aria-label="AI-oversigt"]',
+      'a[href*="/search?"][role="button"]'
+    ]
+  };
 
-function hideElement(el) {
-  if (!el || el.dataset.aiHidden === "1") return;
-  
-  // Brug CSS classes til at skjule hvis muligt (hurtigere end inline styles)
-  el.style.setProperty("display", "none", "important");
-  el.setAttribute("aria-hidden", "true");
-  el.dataset.aiHidden = "1";
-}
-
-function isAiModeButton(el) {
-  if (!el) return false;
-  
-  // Hurtigt tjek: Har elementet relevant tekst?
-  const text = (el.innerText || el.textContent || "").toLowerCase();
-  const aria = (el.getAttribute("aria-label") || "").toLowerCase();
-  
-  const keywords = ["ai mode", "ai-tilstand", "ai overview", "ai-oversigt"];
-  const matchesText = keywords.some(k => text.includes(k) || aria.includes(k));
-
-  if (!matchesText) return false;
-
-  // Tungt tjek: Kun hvis teksten matcher, måler vi størrelsen (Performance fix)
-  try {
-    const rect = el.getBoundingClientRect();
-    // AI-knapper er små. Hvis elementet er stort (som selve søgeboksen), er det en falsk positiv.
-    if (rect.width > 400 || rect.height > 150) return false;
-  } catch (e) {
-    // Ignorer fejl ved måling
+  function hideElement(el) {
+    if (!el || el.dataset.aiHidden === "1") return;
+    el.style.setProperty("display", "none", "important");
+    el.setAttribute("aria-hidden", "true");
+    el.dataset.aiHidden = "1";
   }
 
-  return true;
-}
-
-// =============== HOVEDFUNKTIONER ===============
-
-function scanAndHide(root) {
-  const scope = root || document;
-
-  // 1. Skjul baseret på kendte selektorer (Hurtigst)
-  CONFIG.aiSelectors.forEach(selector => {
-    const els = scope.querySelectorAll(selector);
-    els.forEach(hideElement);
-  });
-
-  // 2. Skjul knapper baseret på tekst (Fallback)
-  const buttons = scope.querySelectorAll('button, a, div[role="button"]');
-  buttons.forEach(btn => {
-    if (isAiModeButton(btn)) hideElement(btn);
-  });
-}
-
-function enforceWebResults() {
-  // Kun på søgeresultat-sider
-  if (!location.pathname.startsWith("/search")) return;
-  
-  const params = new URLSearchParams(window.location.search);
-  
-  // Hvis vi søger ("q") og IKKE har "udm" sat
-  if (params.has("q") && !params.has("udm")) {
-    params.set("udm", "14"); // 14 = "Web" tab (ingen AI)
+  function isAiModeButton(el) {
+    if (!el) return false;
+    const text = (el.innerText || el.textContent || "").toLowerCase();
+    const aria = (el.getAttribute("aria-label") || "").toLowerCase();
     
-    const newUrl = window.location.origin + window.location.pathname + "?" + params.toString();
-    window.location.replace(newUrl); // Replace undgår at "Back"-knappen fejler
+    const keywords = ["ai mode", "ai-tilstand", "ai overview", "ai-oversigt"];
+    // Hvis ingen nøgleord findes, er det ikke knappen
+    if (!keywords.some(k => text.includes(k) || aria.includes(k))) return false;
+
+    // Performance tjek: Er elementet for stort til at være en knap?
+    try {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 400 || rect.height > 150) return false;
+    } catch (e) {}
+
+    return true;
   }
-}
 
-// =============== OVERVÅGNING (OBSERVER) ===============
-
-let timeoutId = null;
-
-function setupObserver() {
-  const observer = new MutationObserver((mutations) => {
-    // Performance: Vent til browseren har en pause (debounce)
-    if (timeoutId) return;
+  function scanAndHide(scope) {
+    scope = scope || document;
     
-    timeoutId = requestAnimationFrame(() => {
-      scanAndHide(document);
-      timeoutId = null;
+    // 1. Fjern kendte bokse
+    CONFIG.aiSelectors.forEach(selector => {
+      scope.querySelectorAll(selector).forEach(hideElement);
     });
-  });
 
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true
-  });
-}
+    // 2. Fjern knapper baseret på tekst
+    scope.querySelectorAll('button, a, div[role="button"]').forEach(btn => {
+      if (isAiModeButton(btn)) hideElement(btn);
+    });
+  }
 
-// =============== INIT ===============
+  function enforceWebResults() {
+    // Kun relevant hvis vi er på /search url'en
+    if (!location.pathname.startsWith("/search")) return;
 
-(function init() {
-  // 1. Tving URL parameter straks
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("q") && !params.has("udm")) {
+      params.set("udm", "14");
+      const newUrl = window.location.origin + window.location.pathname + "?" + params.toString();
+      window.location.replace(newUrl);
+    }
+  }
+
+  // Kør logik
   enforceWebResults();
 
-  // 2. Kør første scan
+  // Overvåg ændringer (Google loader resultater dynamisk)
+  const observer = new MutationObserver(() => {
+    requestAnimationFrame(() => scanAndHide(document));
+  });
+  
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => scanAndHide(document));
   } else {
     scanAndHide(document);
   }
-
-  // 3. Start overvågning af dynamisk indhold
-  setupObserver();
-  
-  // 4. Blokér klik på evt. synlige AI-knapper (som sidste skanse)
-  window.addEventListener("click", (e) => {
-    const target = e.target.closest('button, a, [role="button"]');
-    if (target && isAiModeButton(target)) {
-      e.preventDefault();
-      e.stopPropagation();
-      hideElement(target);
-    }
-  }, true);
-  
-})();
+}
