@@ -18,4 +18,13 @@
    "host_permissions":[
       "<all_urls>"
    ]
+   "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": ["ai-mode-block.js"], 
+      "run_at": "document_start"
+    }
+  ]
 }
