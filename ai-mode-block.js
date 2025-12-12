@@ -1,97 +1,84 @@
-// ai-mode-block.js
+/**
+ * LetSpær V3 Core Engine - AI Cleaner Module (Split Logic Edition)
+ * Powered by NetShield Technology
+ * Source: https://github.com/math14f/NetShield
+ * Licensed under MIT License
+ */
 
-// 1. HURTIGT TJEK: Er vi på Google?
-// Hvis ikke, stopper vi straks for at spare ressourcer på alle andre sider.
-(function preCheck() {
-  const host = location.hostname;
-  if (!host.includes("google")) return; // Stop her, hvis det ikke er Google
-  
-  // 2. TJEK KONFIGURATION: Er AI-blokering slået til?
-  // Vi henter indstillingen fra Managed Storage. Standard er "enabled" hvis intet er sat.
-  chrome.storage.managed.get(['aiBlockMode'], function(data) {
-    const mode = data.aiBlockMode || 'enabled'; // Standard = aktiv
-    
-    if (mode === 'enabled') {
-      // Kun hvis den er enabled, starter vi selve motoren
-      initLetSpaer();
-    } else {
-      console.log("LetSpær: AI-blokering er deaktiveret via Admin Console.");
+// SIKKERHEDS-TJEK: Kør kun på Google
+if (window.location.hostname.includes("google.")) {
+
+    // VARIABEL til at tjekke, om vi er på forsiden eller ej
+    const isOnSearchPage = window.location.pathname.includes('/search');
+
+    // =======================================================
+    // DEL 1: KODE TIL FORSIDEN (Lynhurtig, kun knap)
+    // =======================================================
+    if (!isOnSearchPage) {
+        
+        const hideFrontpageButton = () => {
+            const spans = document.querySelectorAll('span'); // Hurtig søgning efter 'span'
+            for (const span of spans) {
+                if (span.textContent === 'AI-tilstand') {
+                    const buttonContainer = span.closest('button') || span.closest('a') || span.closest('div[role="button"]');
+                    if (buttonContainer && buttonContainer.style.display !== 'none') {
+                        buttonContainer.style.display = 'none';
+                        console.log("LetSpær Core (NetShield): Forside 'AI-tilstand' knap fjernet.");
+                    }
+                }
+            }
+        };
+
+        // Aggressiv kørsel for at fjerne "blink"
+        hideFrontpageButton();
+        setTimeout(hideFrontpageButton, 1);
+        setTimeout(hideFrontpageButton, 50);
+
+        // En simpel observer, der kun leder efter knappen
+        const observer = new MutationObserver(hideFrontpageButton);
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
     }
-  });
-})();
 
-// Denne funktion indeholder alt det "tunge" arbejde
-function initLetSpaer() {
-  console.log("LetSpær: Google Focus Mode starter...");
+    // =======================================================
+    // DEL 2: KODE TIL SØGESIDEN (NetShield robuste fulde scanner)
+    // =======================================================
+    if (isOnSearchPage) {
 
-  const CONFIG = {
-    aiSelectors: [
-      'div.hdzaWe',
-      'div[jsname="yDeuDf"]',
-      'div[data-attrid="ai_overview"]',
-      'div[aria-label="AI Overview"]',
-      'div[aria-label="AI-oversigt"]',
-      'a[href*="/search?"][role="button"]'
-    ]
-  };
+        const hideAllAIElements = () => {
+            // Scan efter AI-oversigten
+            const allElements = document.querySelectorAll('div, span, h1');
+            for (const element of allElements) {
+                if (element.textContent && element.textContent.includes('AI-oversigt')) {
+                    const container = element.closest('div[jscontroller]');
+                    if (container && container.style.display !== 'none') {
+                        container.style.display = 'none';
+                    }
+                }
+            }
 
-  function hideElement(el) {
-    if (!el || el.dataset.aiHidden === "1") return;
-    el.style.setProperty("display", "none", "important");
-    el.setAttribute("aria-hidden", "true");
-    el.dataset.aiHidden = "1";
-  }
+            // Scan efter AI-tilstand (på søgesiden)
+            const spans = document.querySelectorAll('span');
+            for (const span of spans) {
+                if (span.textContent === 'AI-tilstand') {
+                    const buttonContainer = span.closest('div[role="listitem"]');
+                    if (buttonContainer && buttonContainer.style.display !== 'none') {
+                        buttonContainer.style.display = 'none';
+                    }
+                }
+            }
+        };
 
-  function isAiModeButton(el) {
-    if (!el) return false;
-    const text = (el.innerText || el.textContent || "").toLowerCase();
-    const aria = (el.getAttribute("aria-label") || "").toLowerCase();
-    
-    const keywords = ["ai mode", "ai-tilstand", "ai overview", "ai-oversigt"];
-    if (!keywords.some(k => text.includes(k) || aria.includes(k))) return false;
+        // Kør med det samme
+        hideAllAIElements();
 
-    try {
-      const rect = el.getBoundingClientRect();
-      if (rect.width > 400 || rect.height > 150) return false;
-    } catch (e) {}
-    return true;
-  }
-
-  function scanAndHide(scope) {
-    scope = scope || document;
-    
-    CONFIG.aiSelectors.forEach(selector => {
-      scope.querySelectorAll(selector).forEach(hideElement);
-    });
-
-    scope.querySelectorAll('button, a, div[role="button"]').forEach(btn => {
-      if (isAiModeButton(btn)) hideElement(btn);
-    });
-  }
-
-  function enforceWebResults() {
-    if (!location.pathname.startsWith("/search")) return;
-
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("q") && !params.has("udm")) {
-      params.set("udm", "14");
-      const newUrl = window.location.origin + window.location.pathname + "?" + params.toString();
-      window.location.replace(newUrl);
+        // Start den fulde observer
+        const observer = new MutationObserver(hideAllAIElements);
+        observer.observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
     }
-  }
-
-  // Kør logikken
-  enforceWebResults();
-
-  const observer = new MutationObserver(() => {
-    requestAnimationFrame(() => scanAndHide(document));
-  });
-  
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => scanAndHide(document));
-  } else {
-    scanAndHide(document);
-  }
 }
