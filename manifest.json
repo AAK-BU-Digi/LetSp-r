@@ -3,27 +3,47 @@
   "manifest_version": 3,
   "name": "LetSpær",
   "version": "1.0",
-  "description": "Spærring af irrelevante sider i elevernes browser",
+  "description": "Spærring af irrelevante sider i elevernes browser. AI-filter opgraderet.",
+  
   "permissions": [
     "storage.managed",
     "declarativeNetRequest"
   ],
+
   "host_permissions": [
     "<all_urls>"
   ],
+
   "background": {
     "service_worker": "background.js"
   },
+  
   "storage": {
     "managed_schema": "schema.json"
   },
+
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "*://*.google.com/*",
+        "*://*.google.dk/*",
+        "*://*.google.se/*",
+        "*://*.google.no/*",
+        "*://*.google.de/*",
+        "*://*.google.co.uk/*"
       ],
       "js": ["ai-mode-block.js"],
       "run_at": "document_start"
     }
-  ]
+  ],
+
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
 }
