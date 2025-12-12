@@ -1,19 +1,28 @@
 // ai-mode-block.js
 
-// =============== SIKKERHEDS-VENTIL ===============
-// Da manifestet nu siger <all_urls>, kører dette script på ALLE hjemmesider.
-// Vi skal stoppe scriptet STRAKS, hvis vi ikke er på Google, for ikke at sløve andre sider.
-(function failFast() {
+// 1. HURTIGT TJEK: Er vi på Google?
+// Hvis ikke, stopper vi straks for at spare ressourcer på alle andre sider.
+(function preCheck() {
   const host = location.hostname;
-  // Tjekker om "google" indgår i domænet (f.eks. google.com, google.co.jp, google.dk)
-  if (!host.includes("google")) return; // STOP HER
+  if (!host.includes("google")) return; // Stop her, hvis det ikke er Google
   
-  // Hvis vi er her, er det en Google-side. Start "LetSpær" logikken.
-  initLetSpaer();
+  // 2. TJEK KONFIGURATION: Er AI-blokering slået til?
+  // Vi henter indstillingen fra Managed Storage. Standard er "enabled" hvis intet er sat.
+  chrome.storage.managed.get(['aiBlockMode'], function(data) {
+    const mode = data.aiBlockMode || 'enabled'; // Standard = aktiv
+    
+    if (mode === 'enabled') {
+      // Kun hvis den er enabled, starter vi selve motoren
+      initLetSpaer();
+    } else {
+      console.log("LetSpær: AI-blokering er deaktiveret via Admin Console.");
+    }
+  });
 })();
 
+// Denne funktion indeholder alt det "tunge" arbejde
 function initLetSpaer() {
-  console.log("LetSpær: Google Focus Mode aktiveret på", location.hostname);
+  console.log("LetSpær: Google Focus Mode starter...");
 
   const CONFIG = {
     aiSelectors: [
@@ -39,34 +48,28 @@ function initLetSpaer() {
     const aria = (el.getAttribute("aria-label") || "").toLowerCase();
     
     const keywords = ["ai mode", "ai-tilstand", "ai overview", "ai-oversigt"];
-    // Hvis ingen nøgleord findes, er det ikke knappen
     if (!keywords.some(k => text.includes(k) || aria.includes(k))) return false;
 
-    // Performance tjek: Er elementet for stort til at være en knap?
     try {
       const rect = el.getBoundingClientRect();
       if (rect.width > 400 || rect.height > 150) return false;
     } catch (e) {}
-
     return true;
   }
 
   function scanAndHide(scope) {
     scope = scope || document;
     
-    // 1. Fjern kendte bokse
     CONFIG.aiSelectors.forEach(selector => {
       scope.querySelectorAll(selector).forEach(hideElement);
     });
 
-    // 2. Fjern knapper baseret på tekst
     scope.querySelectorAll('button, a, div[role="button"]').forEach(btn => {
       if (isAiModeButton(btn)) hideElement(btn);
     });
   }
 
   function enforceWebResults() {
-    // Kun relevant hvis vi er på /search url'en
     if (!location.pathname.startsWith("/search")) return;
 
     const params = new URLSearchParams(window.location.search);
@@ -77,10 +80,9 @@ function initLetSpaer() {
     }
   }
 
-  // Kør logik
+  // Kør logikken
   enforceWebResults();
 
-  // Overvåg ændringer (Google loader resultater dynamisk)
   const observer = new MutationObserver(() => {
     requestAnimationFrame(() => scanAndHide(document));
   });
