@@ -26,6 +26,11 @@
     "updateInterval": {
       "type": "integer",
       "description": "Opdateringsinterval i millisekunder."
+    },
+    "aiBlockMode": {
+      "type": "string",
+      "enum": ["enabled", "disabled"],
+      "description": "Vælg om AI-elementer og 'Web'-tvang på Google skal være aktivt."
+    }
   }
- }
 }
