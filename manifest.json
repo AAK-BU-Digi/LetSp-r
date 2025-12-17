@@ -2,7 +2,7 @@
   "update_url": "https://clients2.google.com/service/update2/crx",
   "manifest_version": 3,
   "name": "LetSpær",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Spærring af irrelevante sider i elevernes browser. AI-filter opgraderet.",
   "permissions": [
     "storage.managed",
