@@ -13,3 +13,5 @@ Når din extension er blevet udgivet, skal du tildele den til brugerne i Googles
   "blockedPageUrl": Ved brug af External, angives adressen her.
   
   "updateInterval": Hvor ofte skal CSV-filerne hentes, i Milisekunder (MS). 
+
+  "aiBlockMode": Brug automatisk logik, som blokkerer for AI-tilstand på Googles søgemaskine.
