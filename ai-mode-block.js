@@ -8,10 +8,10 @@
 // ================= KONFIGURATION =================
 const NETSHIELD_CONFIG = {
     // Tilføj de tekster der står på selve knapperne her (alle sprog)
-    buttonTexts: ['AI-tilstand', 'AI mode', 'AI-Modus', 'KI-Modus'],
+    buttonTexts: ['AI-tilstand', 'AI Mode', 'AI-Modus', 'KI-Modus'],
     
     // Tilføj de tekster der bruges i AI-oversigt boksen her
-    overviewTexts: ['AI-oversigt', 'AI overview', 'AI-Übersicht', 'KI-Übersicht']
+    overviewTexts: ['AI-oversigt', 'AI Overview', 'AI-Übersicht', 'KI-Übersicht']
 };
 // =================================================
 
