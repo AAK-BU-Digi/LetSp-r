@@ -5,6 +5,16 @@
  * Licensed under MIT License
  */
 
+// ================= KONFIGURATION =================
+const NETSHIELD_CONFIG = {
+    // Tilføj de tekster der står på selve knapperne her (alle sprog)
+    buttonTexts: ['AI-tilstand', 'AI Mode', 'AI-Modus', 'KI-Modus'],
+    
+    // Tilføj de tekster der bruges i AI-oversigt boksen her
+    overviewTexts: ['AI-oversigt', 'AI Overview', 'AI-Übersicht', 'KI-Übersicht']
+};
+// =================================================
+
 // SIKKERHEDS-TJEK: Kør kun på Google
 if (window.location.hostname.includes("google.")) {
 
@@ -17,13 +27,14 @@ if (window.location.hostname.includes("google.")) {
     if (!isOnSearchPage) {
         
         const hideFrontpageButton = () => {
-            const spans = document.querySelectorAll('span'); // Hurtig søgning efter 'span'
+            const spans = document.querySelectorAll('span');
             for (const span of spans) {
-                if (span.textContent === 'AI-tilstand') {
+                // Tjekker om span-teksten findes i vores konfigurations-liste
+                if (NETSHIELD_CONFIG.buttonTexts.includes(span.textContent.trim())) {
                     const buttonContainer = span.closest('button') || span.closest('a') || span.closest('div[role="button"]');
                     if (buttonContainer && buttonContainer.style.display !== 'none') {
                         buttonContainer.style.display = 'none';
-                        console.log("LetSpær Core (NetShield): Forside 'AI-tilstand' knap fjernet.");
+                        console.log("LetSpær Core (NetShield): Forside knap fjernet (" + span.textContent + ")");
                     }
                 }
             }
@@ -51,7 +62,8 @@ if (window.location.hostname.includes("google.")) {
             // Scan efter AI-oversigten
             const allElements = document.querySelectorAll('div, span, h1');
             for (const element of allElements) {
-                if (element.textContent && element.textContent.includes('AI-oversigt')) {
+                // Tjekker om elementet indeholder nogle af ordene fra overview-listen
+                if (element.textContent && NETSHIELD_CONFIG.overviewTexts.some(text => element.textContent.includes(text))) {
                     const container = element.closest('div[jscontroller]');
                     if (container && container.style.display !== 'none') {
                         container.style.display = 'none';
@@ -62,7 +74,8 @@ if (window.location.hostname.includes("google.")) {
             // Scan efter AI-tilstand (på søgesiden)
             const spans = document.querySelectorAll('span');
             for (const span of spans) {
-                if (span.textContent === 'AI-tilstand') {
+                // Tjekker om span-teksten findes i vores konfigurations-liste
+                if (NETSHIELD_CONFIG.buttonTexts.includes(span.textContent.trim())) {
                     const buttonContainer = span.closest('div[role="listitem"]');
                     if (buttonContainer && buttonContainer.style.display !== 'none') {
                         buttonContainer.style.display = 'none';
