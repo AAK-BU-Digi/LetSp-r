@@ -2,11 +2,12 @@
   "update_url": "https://clients2.google.com/service/update2/crx",
   "manifest_version": 3,
   "name": "LetSpær",
-  "version": "1.3",
-  "description": "Spærring af irrelevante sider i elevernes browser. AI-filter opgraderet.",
+  "version": "1.4",
+  "description": "Spærring af irrelevante sider i elevernes browser. AI+spil-filter opgraderet.",
   "permissions": [
-    "storage.managed",
-    "declarativeNetRequest"
+    "storage",
+    "declarativeNetRequest",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -250,6 +251,21 @@
         "ai-mode-block.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_analyzer.js"],
+      "run_at": "document_start",
+      "match_about_blank": true,
+      "all_frames": true
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_analyzer_main.js"],
+      "run_at": "document_start",
+      "match_about_blank": true,
+      "all_frames": true,
+      "world": "MAIN"
     }
   ],
   "declarative_net_request": {

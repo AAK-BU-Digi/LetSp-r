@@ -37,11 +37,7 @@ async function updateRules() {
   const sheetMode = config.sheetMode || 'daily';
   const csvUrl = (sheetMode === 'exam') ? config.examCsvUrl : config.dailyCsvUrl;
   
-  // Bestem hvor eleven skal sendes hen ved blokering
-  let redirectUrl = chrome.runtime.getURL('blocked.html');
-  if (config.blockedPageMode === 'external' && config.blockedPageUrl) {
-    redirectUrl = config.blockedPageUrl;
-  }
+  const redirectUrl = chrome.runtime.getURL('blocked.html');
 
   const sites = await fetchBlockedSites(csvUrl);
   if (sites.length === 0) return;
@@ -100,3 +96,50 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 // Start ved opstart
 startLoop();
+
+// =================================================
+// SIKKERHEDSNET: Godkendte skolesider
+// =================================================
+function isSafeSchoolUrl(urlStr) {
+    if (!urlStr) return false;
+    const coreSchoolSites = [
+        'aula.dk', 'lectio.dk',
+        'drive.google.com', 'docs.google.com', 'slides.google.com', 'classroom.google.com',
+        'matematikfessor.dk', 'nota.dk', 'grammatip.com', 'ordbogen.com',
+        'skoletube.dk', 'gyldendal-uddannelse.dk', 'gyldendal.dk', 'clio.me', 'clioonline.dk', 'systime.dk',
+        'accounts.google.com', 'testogprøver.dk', 'skoleporten.dk', 'minuddannelse.dk',
+        'restudy.dk', 'sofaskolen.dk', 'emu.dk', 'skolon.com', 'alinea.dk',
+        'meebook.com', 'easyiq.dk', 'unilogin.dk', 'mitid.dk',
+        'forms.google.com', 'sheets.google.com', 'keep.google.com',
+        'mail.google.com', 'meet.google.com', 'calendar.google.com',
+        'kahoot.com', 'quizlet.com', 'geogebra.org', 'code.org',
+        'wikipedia.org', 'dr.dk', 'denstoredanske.lex.dk', 'duda.dk'
+    ];
+    try {
+        const hostname = new URL(urlStr).hostname.toLowerCase();
+        return coreSchoolSites.some(site => hostname.includes(site));
+    } catch(e) {
+        return false;
+    }
+}
+
+// =================================================
+// LYTTER: Modtag spil
+// =================================================
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "violationDetected") {
+    const tabUrl = sender.tab?.url || '';
+    
+    // Ignorer hvis eleven befinder sig på en godkendt skoleside
+    if (isSafeSchoolUrl(tabUrl)) {
+        console.log(` LetSpær: Ignorerer overtrædelse på hvidlistet URL: ${tabUrl} (Årsag: ${message.reason})`);
+        return;
+    }
+
+    if (sender.tab && sender.tab.id) {
+      console.log(` LetSpær: Blokerer ${sender.tab.url} (Årsag: ${message.reason})`);
+      
+      chrome.tabs.update(sender.tab.id, { url: chrome.runtime.getURL('blocked.html') });
+    }
+  }
+});
