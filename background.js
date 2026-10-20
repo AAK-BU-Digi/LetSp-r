@@ -37,7 +37,11 @@ async function updateRules() {
   const sheetMode = config.sheetMode || 'daily';
   const csvUrl = (sheetMode === 'exam') ? config.examCsvUrl : config.dailyCsvUrl;
   
-  const redirectUrl = chrome.runtime.getURL('blocked.html');
+  // Bestem hvor eleven skal sendes hen ved blokering
+  let redirectUrl = chrome.runtime.getURL('blocked.html');
+  if (config.blockedPageMode === 'external' && config.blockedPageUrl) {
+    redirectUrl = config.blockedPageUrl;
+  }
 
   const sites = await fetchBlockedSites(csvUrl);
   if (sites.length === 0) return;
@@ -117,7 +121,7 @@ function isSafeSchoolUrl(urlStr) {
     ];
     try {
         const hostname = new URL(urlStr).hostname.toLowerCase();
-        return coreSchoolSites.some(site => hostname.includes(site));
+        return coreSchoolSites.some(site => hostname === site || hostname.endsWith('.' + site));
     } catch(e) {
         return false;
     }

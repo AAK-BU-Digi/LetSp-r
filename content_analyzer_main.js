@@ -15,7 +15,6 @@ function runFastScanners() {
     const pageText = (document.body ? document.body.innerText.substring(0, 15000).toLowerCase() : "");
     const metaDesc = document.querySelector('meta[name="description"]')?.content?.toLowerCase() || "";
     const metaKeywords = document.querySelector('meta[name="keywords"]')?.content?.toLowerCase() || "";
-    const allHTML = (document.documentElement?.innerHTML || "").substring(0, 30000).toLowerCase();
 
     const gameUrlKWs = ['unblocked games', 'games 66', 'games 77', 'games 99', 'io game', 'unblocked spil', 'gratis spil', 'free games', 'html5 game'];
     gameUrlKWs.forEach(kw => {
@@ -25,15 +24,16 @@ function runFastScanners() {
     const gameNames = ['slope', 'retro bowl', '1v1.lol', 'drift hunters', 'cookie clicker', 'subway surfers', 'flappy bird', 'tetris', 'snake game', 'crossy road', '2048', 'run 3', 'fnaf', 'geometry dash', 'moto x3m', 'happy wheels', 'basketball stars', 'shell shockers', 'krunker'];
     gameNames.forEach(name => { if (pageTitle.includes(name)) gameScore += 3; });
 
+    // HTML5 / Canvas elementer (1 point for tilstedeværelse for at undgå false positives på undervisningssider som GeoGebra, Google Earth osv.)
     const hasCanvas = document.querySelector('canvas');
     const hasEmbed = document.querySelector('embed');
     const hasObject = document.querySelector('object');
-    if (hasCanvas || hasEmbed || hasObject) gameScore += 3;
+    if (hasCanvas || hasEmbed || hasObject) gameScore += 1;
 
     if (hasCanvas) {
         try {
             const gl = hasCanvas.getContext('webgl') || hasCanvas.getContext('webgl2') || hasCanvas.getContext('experimental-webgl');
-            if (gl) gameScore += 2;
+            if (gl) gameScore += 1;
         } catch(e) {}
     }
 
@@ -111,16 +111,12 @@ function isSafeSchoolSite() {
         'wikipedia.org', 'dr.dk', 'denstoredanske.lex.dk', 'duda.dk'
     ];
     
-    const h = window.location.hostname;
-    if (coreSchoolSites.some(site => h.includes(site))) return true;
-    
-    if (document.referrer) {
-        try {
-            const refHost = new URL(document.referrer).hostname;
-            if (coreSchoolSites.some(site => refHost.includes(site))) return true;
-        } catch (e) {}
+    try {
+        const h = window.location.hostname.toLowerCase();
+        return coreSchoolSites.some(site => h === site || h.endsWith('.' + site));
+    } catch(e) {
+        return false;
     }
-    return false;
 }
 
 if (!isSafeSchoolSite()) {

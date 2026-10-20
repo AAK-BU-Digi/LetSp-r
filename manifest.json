@@ -6,8 +6,8 @@
   "description": "Spærring af irrelevante sider i elevernes browser. AI+spil-filter opgraderet.",
   "permissions": [
     "storage",
-    "declarativeNetRequest",
-    "tabs"
+    "storage.managed",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "<all_urls>"
