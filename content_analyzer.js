@@ -32,6 +32,9 @@ function containsWholeWord(text, word) {
 function runFastScanners() {
     if (hasBlocked) return;
 
+    // Undgå unødig kørsel på godkendte skolesider
+    if (isSafeSchoolSite()) return;
+
     // Ignorer små iframes (fx standard bannerreklamer på nyhedssider), så de ikke spærrer hele fanen
     if (window !== window.top) {
         if (window.innerWidth > 0 && window.innerHeight > 0 && (window.innerWidth < 320 || window.innerHeight < 240)) {
