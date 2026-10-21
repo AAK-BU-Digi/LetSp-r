@@ -127,6 +127,17 @@ function isSafeSchoolUrl(urlStr) {
     }
 }
 
+// Hent korrekt blokeringsside (intern eller ekstern via Google Admin policy)
+async function getBlockRedirectUrl() {
+    try {
+        const config = await chrome.storage.managed.get(['blockedPageMode', 'blockedPageUrl']);
+        if (config.blockedPageMode === 'external' && config.blockedPageUrl) {
+            return config.blockedPageUrl;
+        }
+    } catch (e) {}
+    return chrome.runtime.getURL('blocked.html');
+}
+
 // =================================================
 // LYTTER: Modtag spil
 // =================================================
@@ -136,14 +147,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     // Ignorer hvis eleven befinder sig på en godkendt skoleside
     if (isSafeSchoolUrl(tabUrl)) {
-        console.log(` LetSpær: Ignorerer overtrædelse på hvidlistet URL: ${tabUrl} (Årsag: ${message.reason})`);
+        console.log(`LetSpær: Ignorerer overtrædelse på hvidlistet URL: ${tabUrl} (Årsag: ${message.reason})`);
         return;
     }
 
     if (sender.tab && sender.tab.id) {
-      console.log(` LetSpær: Blokerer ${sender.tab.url} (Årsag: ${message.reason})`);
+      console.log(`LetSpær: Blokerer ${tabUrl} (Årsag: ${message.reason})`);
       
-      chrome.tabs.update(sender.tab.id, { url: chrome.runtime.getURL('blocked.html') });
+      getBlockRedirectUrl().then((redirectUrl) => {
+        chrome.tabs.update(sender.tab.id, { url: redirectUrl });
+      });
     }
   }
 });
