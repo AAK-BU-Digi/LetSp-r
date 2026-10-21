@@ -143,7 +143,7 @@ async function getBlockRedirectUrl() {
 // =================================================
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "violationDetected") {
-    const tabUrl = sender.tab?.url || '';
+    const tabUrl = sender.tab?.url || sender.url || '';
     
     // Ignorer hvis eleven befinder sig på en godkendt skoleside
     if (isSafeSchoolUrl(tabUrl)) {
