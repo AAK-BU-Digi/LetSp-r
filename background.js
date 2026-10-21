@@ -111,7 +111,7 @@ function isSafeSchoolUrl(urlStr) {
         'drive.google.com', 'docs.google.com', 'slides.google.com', 'classroom.google.com',
         'matematikfessor.dk', 'nota.dk', 'grammatip.com', 'ordbogen.com',
         'skoletube.dk', 'gyldendal-uddannelse.dk', 'gyldendal.dk', 'clio.me', 'clioonline.dk', 'systime.dk',
-        'accounts.google.com', 'testogprøver.dk', 'skoleporten.dk', 'minuddannelse.dk',
+        'accounts.google.com', 'testogprøver.dk', 'xn--testogprver-mgb.dk', 'skoleporten.dk', 'minuddannelse.dk',
         'restudy.dk', 'sofaskolen.dk', 'emu.dk', 'skolon.com', 'alinea.dk',
         'meebook.com', 'easyiq.dk', 'unilogin.dk', 'mitid.dk',
         'forms.google.com', 'sheets.google.com', 'keep.google.com',
