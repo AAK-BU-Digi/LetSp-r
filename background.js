@@ -100,3 +100,63 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 // Start ved opstart
 startLoop();
+
+// =================================================
+// SIKKERHEDSNET: Godkendte skolesider
+// =================================================
+function isSafeSchoolUrl(urlStr) {
+    if (!urlStr) return false;
+    const coreSchoolSites = [
+        'aula.dk', 'lectio.dk',
+        'drive.google.com', 'docs.google.com', 'slides.google.com', 'classroom.google.com',
+        'matematikfessor.dk', 'nota.dk', 'grammatip.com', 'ordbogen.com',
+        'skoletube.dk', 'gyldendal-uddannelse.dk', 'gyldendal.dk', 'clio.me', 'clioonline.dk', 'systime.dk',
+        'accounts.google.com', 'testogprøver.dk', 'xn--testogprver-mgb.dk', 'skoleporten.dk', 'minuddannelse.dk',
+        'restudy.dk', 'sofaskolen.dk', 'emu.dk', 'skolon.com', 'alinea.dk',
+        'meebook.com', 'easyiq.dk', 'unilogin.dk', 'mitid.dk',
+        'forms.google.com', 'sheets.google.com', 'keep.google.com',
+        'mail.google.com', 'meet.google.com', 'calendar.google.com',
+        'kahoot.com', 'quizlet.com', 'geogebra.org', 'code.org',
+        'wikipedia.org', 'dr.dk', 'denstoredanske.lex.dk', 'duda.dk'
+    ];
+    try {
+        const hostname = new URL(urlStr).hostname.toLowerCase();
+        return coreSchoolSites.some(site => hostname === site || hostname.endsWith('.' + site));
+    } catch(e) {
+        return false;
+    }
+}
+
+// Hent korrekt blokeringsside (intern eller ekstern via Google Admin policy)
+async function getBlockRedirectUrl() {
+    try {
+        const config = await chrome.storage.managed.get(['blockedPageMode', 'blockedPageUrl']);
+        if (config.blockedPageMode === 'external' && config.blockedPageUrl) {
+            return config.blockedPageUrl;
+        }
+    } catch (e) {}
+    return chrome.runtime.getURL('blocked.html');
+}
+
+// =================================================
+// LYTTER: Modtag spil
+// =================================================
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "violationDetected") {
+    const tabUrl = sender.tab?.url || sender.url || '';
+    
+    // Ignorer hvis eleven befinder sig på en godkendt skoleside
+    if (isSafeSchoolUrl(tabUrl)) {
+        console.log(`LetSpær: Ignorerer overtrædelse på hvidlistet URL: ${tabUrl} (Årsag: ${message.reason})`);
+        return;
+    }
+
+    if (sender.tab && sender.tab.id) {
+      console.log(`LetSpær: Blokerer ${tabUrl} (Årsag: ${message.reason})`);
+      
+      getBlockRedirectUrl().then((redirectUrl) => {
+        chrome.tabs.update(sender.tab.id, { url: redirectUrl });
+      });
+    }
+  }
+});
