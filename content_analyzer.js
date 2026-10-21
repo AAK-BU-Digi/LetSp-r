@@ -116,7 +116,7 @@ function runFastScanners() {
 
     let sitesScore = 0;
     if (hostname === 'sites.google.com') {
-        if (document.querySelectorAll('iframe').length > 5) sitesScore += 5;
+        if (document.querySelectorAll('iframe').length > 5) sitesScore += 3;
         if (pageTitle.includes('games') || pageTitle.includes('unblocked') || pageTitle.includes('proxy')) sitesScore += 3;
         const gameMenuKWs = ['gmes', 'g𝙖mes', 'unblocked', 'unblσcked', 'prσxy', 'prοxy', 'g4mes', 'gam3s', 'unblocke', 'pr0xy'];
         document.querySelectorAll('a').forEach(a => {
