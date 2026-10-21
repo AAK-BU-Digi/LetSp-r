@@ -28,7 +28,7 @@ async function getConfig() {
   });
 }
 
-// Hent og rens CSV-filen fra nettet
+// Hent og rens CSV-filen fra nettet (inkl. automatisk Punycode-konvertering af æ, ø og å)
 async function fetchBlockedSites(csvUrl) {
   if (!csvUrl) return [];
   try {
@@ -36,7 +36,7 @@ async function fetchBlockedSites(csvUrl) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const text = await response.text();
 
-    // Konverter CSV-tekst til et rent array af unike domæner/stier
+    // Konverter CSV-tekst til et rent array af unikke ASCII-domæner/stier
     const cleaned = text
       .split(/\r?\n/)
       .map(line => line.split(',')[0]) // Tag kun første kolonne, hvis der er flere
@@ -44,7 +44,18 @@ async function fetchBlockedSites(csvUrl) {
       .map(line => line.replace(/^https?:\/\//i, '')) // Fjern http:// og https://
       .map(line => line.replace(/^www\./i, '')) // Fjern www. så || matcher både med og uden www
       .map(line => line.replace(/\/+$/, '')) // Fjern evt. afsluttende skråstreg
-      .filter(line => line.length > 0 && line.includes('.') && !line.includes(' '));
+      .filter(line => line.length > 0 && line.includes('.') && !line.includes(' '))
+      .map(line => {
+        try {
+          // Oversætter automatisk æ, ø, å i domæner til ASCII Punycode (xn--...), som Chrome kræver
+          const urlObj = new URL('http://' + line);
+          const path = (urlObj.pathname && urlObj.pathname !== '/') ? urlObj.pathname : '';
+          return urlObj.hostname + path;
+        } catch (e) {
+          return '';
+        }
+      })
+      .filter(line => line.length > 0 && /^[\x00-\x7F]+$/.test(line)); // Sikrer kun gyldige ASCII-tegn
 
     return [...new Set(cleaned)];
   } catch (error) {
@@ -111,7 +122,7 @@ async function updateRules() {
           action: { type: 'block' },
           condition: {
             urlFilter: pattern,
-            domains: ['bing.com', 'ecosia.org'],
+            initiatorDomains: ['bing.com', 'ecosia.org'],
             resourceTypes: ['xmlhttprequest', 'sub_frame', 'other']
           }
         });
