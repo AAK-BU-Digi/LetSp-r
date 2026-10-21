@@ -4,9 +4,9 @@ Når din extension er blevet udgivet, skal du tildele den til brugerne i Googles
 
   "sheetMode": "daily" eller "exam".  Der er fx. blokkeret for AI-værktøjer ifm. prøverne jf. BUVM.
   
-  "dailyCsvUrl": Adressen til offentlig CSV-fil med adresser. I eksemplet er Aarhus opdaterede blokkeringsliste.
+  "dailyCsvUrl": Adressen til offentlig CSV-fil med adresser. 
   
-  "examCsvUrl": Adressen til offentlig CSV-fil med adresser. I eksemplet er Aarhus opdaterede blokkeringsliste.
+  "examCsvUrl": Adressen til offentlig CSV-fil med adresser.
   
   "blockedPageMode": "internal" eller "external". Hvis du vil bruge den indbyggede kan du bruge den eller lave din egen - det er "internal". Du kan også pege på en offentlig hjemmeside, det er "external"
 
