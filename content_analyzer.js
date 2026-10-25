@@ -166,15 +166,19 @@ function runFastScanners() {
       sitesMatches.push('Google Sites: Spilord i titel (+3)');
     }
     const gameMenuKWs = ['gmes', 'g mes', 'unblocked', 'unbl cked', 'pr xy', 'g4mes', 'gam3s', 'unblocke', 'pr0xy'];
+    const matchedMenuKWs = new Set();
     document.querySelectorAll('a').forEach(a => {
       const t = (a.textContent || '').toLowerCase();
       const href = (a.href || '').toLowerCase();
       gameMenuKWs.forEach(kw => {
         if (t.includes(kw) || href.includes(kw)) {
-          sitesScore += 4;
-          sitesMatches.push(`Google Sites: Menu spilord/sløret ord: "${kw}" (+4)`);
+          matchedMenuKWs.add(kw);
         }
       });
+    });
+    matchedMenuKWs.forEach(kw => {
+      sitesScore += 4;
+      sitesMatches.push(`Google Sites: Menu spilord/sløret ord: "${kw}" (+4)`);
     });
   }
 

@@ -150,7 +150,8 @@ function initAiBlocker() {
 
       const tabNavs = document.querySelectorAll('[data-test-id="tab-navigation-item"]');
       tabNavs.forEach(tab => {
-        if (tab.innerText.includes('Chat') || tab.innerText.includes('AI')) {
+        const text = (tab.textContent || '').trim();
+        if (text.includes('Chat') || text.includes('AI')) {
           if (tab.style.display !== 'none') {
             tab.style.display = 'none';
             console.log('[LetSpær:AI] Skjulte Ecosia AI fanebjælke.');
