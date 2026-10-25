@@ -19,6 +19,10 @@ function checkMainWorldGlobals() {
         );
 
         if (hasPureGameEngine || hasMediaLib) {
+            console.log('[LetSpær:MainWorld] Opdagede globale biblioteker i window:', {
+                pureGameEngine: hasPureGameEngine,
+                mediaLib: hasMediaLib
+            });
             document.dispatchEvent(new CustomEvent('NetShieldMainProbe', {
                 detail: {
                     hasPureGameEngine: hasPureGameEngine,
