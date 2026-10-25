@@ -31,7 +31,10 @@ function initAiBlocker() {
         for (const span of spans) {
           if (NETSHIELD_CONFIG.buttonTexts.includes(span.textContent.trim())) {
             const btn = span.closest('button, a, div[role="button"]');
-            if (btn) btn.style.display = 'none';
+            if (btn && btn.style.display !== 'none') {
+              btn.style.display = 'none';
+              console.log('[LetSpær:AI] Skjulte AI-knap på Google forside:', span.textContent.trim());
+            }
           }
         }
       };
@@ -58,7 +61,10 @@ function initAiBlocker() {
               container.id !== 'rcnt' &&
               container.id !== 'center_col'
             ) {
-              container.style.display = 'none';
+              if (container.style.display !== 'none') {
+                container.style.display = 'none';
+                console.log('[LetSpær:AI] Skjulte Google AI Overview container for:', text);
+              }
             }
           }
         });
@@ -67,7 +73,10 @@ function initAiBlocker() {
         document.querySelectorAll('span, div[role="tab"]').forEach(el => {
           if (NETSHIELD_CONFIG.buttonTexts.includes(el.textContent.trim())) {
             const btn = el.closest('div[role="listitem"], a, div[role="tab"]');
-            if (btn) btn.style.display = 'none';
+            if (btn && btn.style.display !== 'none') {
+              btn.style.display = 'none';
+              console.log('[LetSpær:AI] Skjulte AI-knap i Google menu:', el.textContent.trim());
+            }
           }
         });
       };
@@ -84,6 +93,7 @@ function initAiBlocker() {
   if (isBing) {
     if (pathname.includes('/copilotsearch')) {
       const q = new URLSearchParams(window.location.search).get('q') || '';
+      console.warn('[LetSpær:AI] Bing Copilot søgning detekteret – omdirigerer til standard søgning.');
       window.location.replace('https://www.bing.com/search?q=' + encodeURIComponent(q));
       return;
     }
@@ -91,13 +101,20 @@ function initAiBlocker() {
     const hideBingAI = () => {
       document.querySelectorAll('a[href*="/copilotsearch"], #b-scopeListItem-conv').forEach(link => {
         const container = link.closest('li') || link;
-        container.style.display = 'none';
+        if (container.style.display !== 'none') {
+          container.style.display = 'none';
+          console.log('[LetSpær:AI] Skjulte Bing Copilot link.');
+        }
       });
       document.querySelectorAll('.gs_main, #b_copilot_search_container').forEach(el => {
-        el.style.display = 'none';
+        if (el.style.display !== 'none') {
+          el.style.display = 'none';
+          console.log('[LetSpær:AI] Skjulte Bing Copilot container.');
+        }
       });
       document.querySelectorAll('iframe').forEach(iframe => {
         if (iframe.src && iframe.src.includes('cpltsrchif=1')) {
+          console.log('[LetSpær:AI] Fjernede Bing Copilot iframe.');
           iframe.remove();
         }
       });
@@ -115,6 +132,7 @@ function initAiBlocker() {
     // 1. HARD BLOCK: Hvis de prøver at gå ind på siden direkte
     if (pathname.includes('/ai-search') || pathname.includes('/chat')) {
       const q = new URLSearchParams(window.location.search).get('q') || '';
+      console.warn('[LetSpær:AI] Ecosia AI-sti detekteret – omdirigerer til standard søgning.');
       window.location.replace('https://www.ecosia.org/search?q=' + encodeURIComponent(q));
       return;
     }
@@ -126,13 +144,17 @@ function initAiBlocker() {
         const container = btn.closest('li') || btn;
         if (container.style.display !== 'none') {
           container.style.display = 'none';
+          console.log('[LetSpær:AI] Skjulte Ecosia AI knap.');
         }
       }
 
       const tabNavs = document.querySelectorAll('[data-test-id="tab-navigation-item"]');
       tabNavs.forEach(tab => {
         if (tab.innerText.includes('Chat') || tab.innerText.includes('AI')) {
-          tab.style.display = 'none';
+          if (tab.style.display !== 'none') {
+            tab.style.display = 'none';
+            console.log('[LetSpær:AI] Skjulte Ecosia AI fanebjælke.');
+          }
         }
       });
     };

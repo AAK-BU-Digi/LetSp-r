@@ -59,7 +59,7 @@ async function fetchBlockedSites(csvUrl) {
 
     return [...new Set(cleaned)];
   } catch (error) {
-    console.error('LetSpær: Kunne ikke hente blokeringer:', error);
+    console.error('[LetSpær:BG] Kunne ikke hente blokeringer fra CSV:', error);
     return [];
   }
 }
@@ -74,6 +74,8 @@ async function updateRules() {
     const sheetMode = config.sheetMode || 'daily';
     const csvUrl = (sheetMode === 'exam') ? config.examCsvUrl : config.dailyCsvUrl;
     const aiBlockEnabled = config.aiBlockMode !== 'disabled'; // Aktiv som standard
+
+    console.log(`[LetSpær:BG] Opdaterer regler. Tilstand: ${sheetMode}, URL: ${csvUrl || 'Ingen CSV URL angivet'}`);
 
     // Bestem hvor eleven skal sendes hen ved blokering
     let redirectUrl = chrome.runtime.getURL('blocked.html');
@@ -139,10 +141,10 @@ async function updateRules() {
         addRules: newRules
       });
 
-      console.log(`LetSpær: Opdateret. ${sites.length} domæner blokeret (AI-filter: ${aiBlockEnabled ? 'til' : 'fra'}).`);
+      console.log(`[LetSpær:BG] Dynamiske regler opdateret: ${sites.length} CSV-domæner blokeret (AI-filter: ${aiBlockEnabled ? 'Aktiv' : 'Deaktiveret'}).`);
     }
   } catch (err) {
-    console.error('LetSpær: Fejl under opdatering af regler:', err);
+    console.error('[LetSpær:BG] Fejl under opdatering af regler:', err);
   } finally {
     isUpdating = false;
   }
@@ -156,10 +158,12 @@ async function setupAlarm() {
 
   await chrome.alarms.clear(ALARM_NAME);
   chrome.alarms.create(ALARM_NAME, { periodInMinutes });
+  console.log(`[LetSpær:BG] Opsat opdaterings-alarm "${ALARM_NAME}" med interval på ${periodInMinutes} minutter.`);
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
+    console.log(`[LetSpær:BG] Alarm "${alarm.name}" udløst – genindlæser blokeringsregler.`);
     updateRules();
   }
 });
@@ -167,17 +171,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Lyt efter live-ændringer i Google Admin Console
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'managed') {
+    console.log('[LetSpær:BG] Ændringer registreret i managed storage – opdaterer regler og alarms.');
     updateRules();
     setupAlarm();
   }
 });
 
 chrome.runtime.onInstalled.addListener(() => {
+  console.log('[LetSpær:BG] Extension installeret/opdateret.');
   updateRules();
   setupAlarm();
 });
 
 chrome.runtime.onStartup.addListener(() => {
+  console.log('[LetSpær:BG] Browser startet up.');
   updateRules();
   setupAlarm();
 });
@@ -187,7 +194,7 @@ updateRules();
 setupAlarm();
 
 // =================================================
-// SIKKERHEDSNET: Godkendte skolesider
+// SIKKERHEDSNET: Godkendte skolesider (Allowlist)
 // =================================================
 function isSafeSchoolUrl(urlStr) {
   if (!urlStr) return false;
@@ -250,7 +257,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // Ignorer hvis eleven befinder sig på en godkendt skoleside
     if (isSafeSchoolUrl(tabUrl)) {
-      console.log(`LetSpær: Ignorerer overtrædelse på hvidlistet URL: ${tabUrl} (årsag: ${message.reason})`);
+      console.log(`[LetSpær:BG] Ignorerer overtrædelse på allowlistet URL: ${tabUrl} (årsag: ${message.reason})`);
       sendResponse({ action: 'ignore' });
       return true;
     }
@@ -260,6 +267,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Hvis spillet ligger i en iframe på en almindelig hjemmeside (ikke Google Sites/GitHub osv.),
     // beder vi content_analyzer.js om kun at blokere selve iframen i stedet for at lukke hele fanen
     if (isSubFrame && !isGameHostingPlatform(tabUrl)) {
+      console.log(`[LetSpær:BG] Isoleret iframe overtrædelse opdaget på ${tabUrl} (Frame ID: ${sender.frameId}). Sender blockFrameOnly.`);
       getBlockRedirectUrl().then((redirectUrl) => {
         sendResponse({ action: 'blockFrameOnly', redirectUrl });
       });
@@ -268,7 +276,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // Ellers blokerer vi hele fanen
     if (sender.tab && sender.tab.id) {
-      console.log(`LetSpær: Blokerer fane ${tabUrl} (årsag: ${message.reason})`);
+      console.warn(`[LetSpær:BG] Blokerer hele fanen ${tabUrl} (årsag: ${message.reason})`);
       getBlockRedirectUrl().then((redirectUrl) => {
         chrome.tabs.update(sender.tab.id, { url: redirectUrl });
       });
