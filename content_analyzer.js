@@ -70,11 +70,15 @@ function runFastScanners() {
     }
   });
 
-  const gameNames = ['slope', 'retro bowl', '1v1.lol', 'drift hunters', 'cookie clicker', 'subway surfers', 'flappy bird', 'tetris', 'snake game', 'crossy road', '2048', 'run 3', 'fnaf', 'geometry dash', 'moto x3m', 'happy wheels', 'basketball stars', 'shell shockers', 'krunker'];
+  const gameNames = ['slope', 'retro bowl', '1v1.lol', 'drift hunters', 'cookie clicker', 'subway surfers', 'flappy bird', 'tetris', 'snake game', 'crossy road', '2048', 'run 3', 'fnaf', 'geometry dash', 'moto x3m', 'happy wheels', 'basketball stars', 'shell shockers', 'krunker', 'subwaysurfers'];
   gameNames.forEach(name => {
+    const cleanName = name.replace(/\s+/g, '');
     if (containsWholeWord(pageTitle, name)) {
+      gameScore += 4;
+      gameMatches.push(`Spilnavn i titel: "${name}" (+4)`);
+    } else if (pageUrl.includes(cleanName) || hostname.includes(cleanName)) {
       gameScore += 3;
-      gameMatches.push(`Spilnavn i titel: "${name}" (+3)`);
+      gameMatches.push(`Spilnavn i URL/domæne: "${name}" (+3)`);
     }
   });
 
