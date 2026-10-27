@@ -1,17 +1,65 @@
 /**
  * LetSpær V3 Core Engine - AI Cleaner Module
- * Version 1.5 - Safe DOM Targeting & Managed Policy Support
+ * Version 1.6 - Ultra-aggressive DOM & CSS Shield for Google, Bing & Ecosia
  * Powered by NetShield Technology
  * Licensed under MIT License
  */
 
 const NETSHIELD_CONFIG = {
-  // Tekst vi leder efter på søgemaskiner for at skjule AI-knapper/faner
-  buttonTexts: ['AI-tilstand', 'AI Mode', 'AI-Modus', 'KI-Modus', 'Chat'],
-  overviewTexts: ['AI-oversigt', 'AI Overview', 'AI-Übersicht', 'KI-Übersicht']
+  buttonTexts: ['AI-tilstand', 'AI Mode', 'AI-Modus', 'KI-Modus', 'Chat', 'Copilot'],
+  overviewTexts: ['AI-oversigt', 'AI Overview', 'AI-Übersicht', 'KI-Übersicht', 'AI Overviews']
 };
 
+// CSS injection for lynhurtig udblænding før JS-render
+function injectAiStyleBlock() {
+  if (document.getElementById('letspaer-ai-style')) return;
+
+  const style = document.createElement('style');
+  style.id = 'letspaer-ai-style';
+  style.textContent = `
+    /* Google AI Overview Containers & Wrappers */
+    div[data-attrid="ai_overview"],
+    div[data-attrid="wa:/description"],
+    div[jscontroller="p088N"],
+    div[data-mcpr],
+    div[data-md5],
+    div[aria-label*="AI Overview"],
+    div[aria-label*="AI-oversigt"],
+    div[data-async-context*="ai_overview"],
+    div[data-async-type="aimode"],
+    /* Google AI Chat & Menu Buttons */
+    a[href*="tbm=ai"],
+    div[role="tab"][aria-label*="AI"],
+    a[aria-label*="AI-tilstand"],
+    a[aria-label*="AI Mode"],
+    /* Bing Copilot / AI Elements */
+    a[href*="/copilotsearch"],
+    #b-scopeListItem-conv,
+    .gs_main,
+    #b_copilot_search_container,
+    iframe[src*="cpltsrchif=1"],
+    /* Ecosia AI Elements */
+    a[href*="/ai-search"],
+    a[href*="/chat"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      height: 0 !important;
+      overflow: hidden !important;
+    }
+  `;
+
+  const target = document.head || document.documentElement;
+  if (target) {
+    target.appendChild(style);
+    console.log('[LetSpær:AI] CSS-skjold for AI-elementer aktiveret.');
+  }
+}
+
 function initAiBlocker() {
+  injectAiStyleBlock();
+
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
 
@@ -48,12 +96,12 @@ function initAiBlocker() {
     if (isOnSearchPage) {
       // Søgesiden
       const hideAllAIElements = () => {
-        // 1. Skjul "AI Overview" / "AI-oversigt" bokse sikkert uden at skjule hele søgeresultatet (#search / #rso)
-        const headings = document.querySelectorAll('h1, h2, div[role="heading"], span');
+        // 1. Skjul AI Overview ved at tjekke tekster og overskrifter
+        const headings = document.querySelectorAll('h1, h2, div[role="heading"], span, div');
         headings.forEach(el => {
-          const text = el.textContent.trim();
-          if (NETSHIELD_CONFIG.overviewTexts.includes(text)) {
-            const container = el.closest('div[data-mcpr], div[jscontroller], div[data-hveid]');
+          const text = el.textContent ? el.textContent.trim() : '';
+          if (NETSHIELD_CONFIG.overviewTexts.some(ot => text === ot || text.startsWith(ot))) {
+            const container = el.closest('div[data-attrid], div[data-mcpr], div[jscontroller], div[data-hveid], div[data-async-context]');
             if (
               container &&
               !container.querySelector('#rso') &&
@@ -69,13 +117,14 @@ function initAiBlocker() {
           }
         });
 
-        // 2. Skjul AI-knapper i topmenuen
-        document.querySelectorAll('span, div[role="tab"]').forEach(el => {
-          if (NETSHIELD_CONFIG.buttonTexts.includes(el.textContent.trim())) {
-            const btn = el.closest('div[role="listitem"], a, div[role="tab"]');
+        // 2. Skjul AI-knapper i topmenuen og søgefiltre
+        document.querySelectorAll('span, div[role="tab"], a, div[role="listitem"]').forEach(el => {
+          const text = (el.textContent || '').trim();
+          if (NETSHIELD_CONFIG.buttonTexts.includes(text)) {
+            const btn = el.closest('div[role="listitem"], a, div[role="tab"], button');
             if (btn && btn.style.display !== 'none') {
               btn.style.display = 'none';
-              console.log('[LetSpær:AI] Skjulte AI-knap i Google menu:', el.textContent.trim());
+              console.log('[LetSpær:AI] Skjulte AI-knap i Google menu:', text);
             }
           }
         });
@@ -129,7 +178,6 @@ function initAiBlocker() {
 
   // --- C: ECOSIA LOGIK ---
   if (isEcosia) {
-    // 1. HARD BLOCK: Hvis de prøver at gå ind på siden direkte
     if (pathname.includes('/ai-search') || pathname.includes('/chat')) {
       const q = new URLSearchParams(window.location.search).get('q') || '';
       console.warn('[LetSpær:AI] Ecosia AI-sti detekteret – omdirigerer til standard søgning.');
@@ -137,7 +185,6 @@ function initAiBlocker() {
       return;
     }
 
-    // 2. Skjul knapperne
     const hideEcosiaAI = () => {
       const aiButtons = document.querySelectorAll('a[href*="/ai-search"], a[href*="/chat"]');
       for (const btn of aiButtons) {
@@ -168,7 +215,6 @@ function initAiBlocker() {
   }
 }
 
-// Tjek i Google Admin Console om aiBlockMode er slået til (default: enabled)
 if (chrome.storage && chrome.storage.managed) {
   chrome.storage.managed.get(['aiBlockMode'], (data) => {
     if (chrome.runtime.lastError || !data || data.aiBlockMode !== 'disabled') {

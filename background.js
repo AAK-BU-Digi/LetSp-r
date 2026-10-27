@@ -78,9 +78,9 @@ async function updateRules() {
     console.log(`[LetSpær:BG] Opdaterer regler. Tilstand: ${sheetMode}, URL: ${csvUrl || 'Ingen CSV URL angivet'}`);
 
     // Bestem hvor eleven skal sendes hen ved blokering
-    let redirectUrl = chrome.runtime.getURL('blocked.html');
+    let baseRedirectUrl = chrome.runtime.getURL('blocked.html');
     if (config.blockedPageMode === 'external' && config.blockedPageUrl) {
-      redirectUrl = config.blockedPageUrl;
+      baseRedirectUrl = config.blockedPageUrl;
     }
 
     const sites = await fetchBlockedSites(csvUrl);
@@ -94,12 +94,16 @@ async function updateRules() {
         ? `||${cleanSite}`
         : `||${cleanSite}^`;
 
+      const redirectUrlWithReason = baseRedirectUrl.includes('?')
+        ? `${baseRedirectUrl}&reason=csv&domain=${encodeURIComponent(cleanSite)}`
+        : `${baseRedirectUrl}?reason=csv&domain=${encodeURIComponent(cleanSite)}`;
+
       newRules.push({
         id: index + 1,
         priority: 1,
         action: {
           type: 'redirect',
-          redirect: { url: redirectUrl }
+          redirect: { url: redirectUrlWithReason }
         },
         condition: {
           urlFilter: filterPattern,
@@ -238,14 +242,24 @@ function isGameHostingPlatform(urlStr) {
 }
 
 // Hent korrekt blokeringsside (intern eller ekstern via Google Admin policy)
-async function getBlockRedirectUrl() {
+async function getBlockRedirectUrl(reason = '', domain = '') {
+  let url = chrome.runtime.getURL('blocked.html');
   try {
     const config = await getConfig();
     if (config.blockedPageMode === 'external' && config.blockedPageUrl) {
-      return config.blockedPageUrl;
+      url = config.blockedPageUrl;
     }
   } catch (e) {}
-  return chrome.runtime.getURL('blocked.html');
+
+  const params = new URLSearchParams();
+  if (reason) params.set('reason', reason);
+  if (domain) params.set('domain', domain);
+
+  const queryString = params.toString();
+  if (queryString) {
+    url += (url.includes('?') ? '&' : '?') + queryString;
+  }
+  return url;
 }
 
 // =================================================
@@ -268,7 +282,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // beder vi content_analyzer.js om kun at blokere selve iframen i stedet for at lukke hele fanen
     if (isSubFrame && !isGameHostingPlatform(tabUrl)) {
       console.log(`[LetSpær:BG] Isoleret iframe overtrædelse opdaget på ${tabUrl} (Frame ID: ${sender.frameId}). Sender blockFrameOnly.`);
-      getBlockRedirectUrl().then((redirectUrl) => {
+      getBlockRedirectUrl('iframe_game', tabUrl).then((redirectUrl) => {
         sendResponse({ action: 'blockFrameOnly', redirectUrl });
       });
       return true; // Hold beskedkanalen åben til asynkront svar
@@ -277,7 +291,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Ellers blokerer vi hele fanen
     if (sender.tab && sender.tab.id) {
       console.warn(`[LetSpær:BG] Blokerer hele fanen ${tabUrl} (årsag: ${message.reason})`);
-      getBlockRedirectUrl().then((redirectUrl) => {
+      const reasonCode = message.reason === 'game' ? 'heuristic_game' : message.reason;
+      getBlockRedirectUrl(reasonCode, tabUrl).then((redirectUrl) => {
         chrome.tabs.update(sender.tab.id, { url: redirectUrl });
       });
     }

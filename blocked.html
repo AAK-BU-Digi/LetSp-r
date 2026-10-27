@@ -22,7 +22,7 @@
             border-radius: 12px;
             padding: 40px 30px;
             text-align: center;
-            max-width: 420px;
+            max-width: 440px;
             width: 90%;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
         }
@@ -44,7 +44,25 @@
             font-size: 15px;
             line-height: 1.6;
             color: #94a3b8;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+        }
+
+        .reason-box {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #38bdf8;
+            margin-bottom: 25px;
+            word-break: break-word;
+            text-align: left;
+        }
+
+        .reason-box strong {
+            color: #f8fafc;
+            display: block;
+            margin-bottom: 4px;
         }
 
         .divider {
@@ -71,6 +89,11 @@
         <h1>Hov! Siden er blokeret</h1>
         <p>Denne hjemmeside er spærret af skolens it-system for at sikre, at der er arbejdsro i timerne, så du kan fokusere på undervisningen.</p>
         
+        <div id="reasonContainer" class="reason-box" style="display: none;">
+            <strong>Årsag til blokering:</strong>
+            <span id="reasonText">---</span>
+        </div>
+
         <div class="divider"></div>
         
         <div class="footer">
@@ -78,5 +101,45 @@
         </div>
     </div>
 
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const reason = params.get('reason');
+            const domain = params.get('domain') || params.get('url') || '';
+
+            const reasonContainer = document.getElementById('reasonContainer');
+            const reasonText = document.getElementById('reasonText');
+
+            let message = '';
+            let consoleMsg = '';
+
+            if (reason === 'csv' || reason === 'list') {
+                const target = domain ? ` ("${domain}")` : '';
+                message = `Blokeret pga. match på skolens centrale blokeringsliste (CSV)${target}.`;
+                consoleMsg = `[LetSpær] Siden er blokeret pga. match på den centrale CSV-blokeringsliste${target}.`;
+            } else if (reason === 'heuristic_game' || reason === 'game') {
+                message = `Automatisk spil-detektion: Mistænkeligt spilindhold opdaget på siden.`;
+                consoleMsg = `[LetSpær] Siden er blokeret af den heuristiske spil-scanner (score >= 5).`;
+            } else if (reason === 'iframe_game') {
+                message = `Spil-detektion i indlejret ramme (iframe).`;
+                consoleMsg = `[LetSpær] Indlejret iframe blokeret pga. spilindhold.`;
+            } else if (reason === 'ai') {
+                message = `AI-tjeneste / AI-chat er spærret i skoletiden.`;
+                consoleMsg = `[LetSpær] Siden er blokeret pga. AI-begrænsning.`;
+            } else if (reason) {
+                message = `Blokeringsregel udløst (${reason}).`;
+                consoleMsg = `[LetSpær] Siden er blokeret. Årsag: ${reason}`;
+            }
+
+            if (message) {
+                reasonText.textContent = message;
+                reasonContainer.style.display = 'block';
+            }
+
+            if (consoleMsg) {
+                console.warn(consoleMsg);
+            }
+        })();
+    </script>
 </body>
 </html>
