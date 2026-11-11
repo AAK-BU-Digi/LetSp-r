@@ -1,34 +1,54 @@
 // Filnavn: content_analyzer.js
 // Kører i ISOLATED world - beskyttet mod manipulation fra hjemmesiden
+// letspaerIsEducationService kommer fra education-list.js og LetSpaerLog fra debug.js,
+// som begge indlæses før denne fil.
+
+const GAME_THRESHOLD = 5;
 
 let hasBlocked = false;
+let scannerEnabled = false; // Sættes først, når listen over undervisningstjenester er tjekket
 let detectedPureGameEngine = false;
 let detectedMediaLib = false;
+
+// Seneste resultat for denne ramme. Ligger kun i hukommelsen og gemmes ingen steder;
+// det udleveres kun til LetSpær-popuppen, når debugLogging er slået til.
+let diagnostics = { status: 'pending', score: undefined, signals: [] };
+
+function safePageUrl() {
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    return location.hostname + (location.pathname === '/' ? '' : location.pathname);
+  }
+  return location.protocol.replace(':', '');
+}
 
 // Lyt efter signaler fra content_analyzer_main.js (kun opgradering til true er mulig)
 document.addEventListener('NetShieldMainProbe', (e) => {
   if (e.detail?.hasPureGameEngine) detectedPureGameEngine = true;
   if (e.detail?.hasMediaLib) detectedMediaLib = true;
-  runFastScanners();
+  if (scannerEnabled) runFastScanners();
 });
 
-function reportViolation(reason) {
+function reportViolation(reason, score, signals) {
   if (reason !== 'game' || hasBlocked) return;
   hasBlocked = true;
   try {
     chrome.runtime.sendMessage(
-      { action: 'violationDetected', reason: reason },
+      { action: 'violationDetected', reason, score, signals, page: safePageUrl() },
       (response) => {
         if (chrome.runtime.lastError) return;
+        // Undtaget fordi fanen eller rammen er en undervisningstjeneste
+        if (response && response.action === 'ignore') {
+          diagnostics.status = 'ignored_education';
+        }
         // Hvis dette er en iframe på en almindelig side, erstatter vi kun selve iframen
         if (response && response.action === 'blockFrameOnly' && response.redirectUrl) {
-          console.warn('[LetSpær:Content] Modtog blockFrameOnly fra background.js – omdirigerer denne iframe til blocked.html');
+          LetSpaerLog.warn('[LetSpær:Content] Modtog blockFrameOnly fra background.js – omdirigerer denne iframe til blocked.html');
           window.location.replace(response.redirectUrl);
         }
       }
     );
   } catch (err) {
-    console.error('[LetSpær:Content] Fejl ved afsendelse af besked til background.js:', err.message);
+    LetSpaerLog.error('[LetSpær:Content] Fejl ved afsendelse af besked til background.js:', err.message);
   }
 }
 
@@ -40,15 +60,13 @@ function containsWholeWord(text, word) {
 }
 
 function runFastScanners() {
-  if (hasBlocked) return;
-
-  // Undgå unødig kørsel på godkendte skolesider
-  if (isSafeSchoolSite()) return;
+  if (!scannerEnabled || hasBlocked) return;
 
   // Ignorer små iframes (fx standard bannerreklamer på nyhedssider), så de ikke udløser falske alarmer
   if (window !== window.top) {
     if (window.innerWidth > 0 && window.innerHeight > 0 && (window.innerWidth < 320 || window.innerHeight < 240)) {
-      console.log(`[LetSpær:Content] Spring over lille iframe (${window.innerWidth}x${window.innerHeight})`);
+      LetSpaerLog.log(`[LetSpær:Content] Spring over lille iframe (${window.innerWidth}x${window.innerHeight})`);
+      diagnostics = { status: 'small_iframe', score: undefined, signals: [] };
       return;
     }
   }
@@ -189,13 +207,19 @@ function runFastScanners() {
   const finalScore = Math.max(gameScore, sitesScore);
   const allMatches = [...gameMatches, ...sitesMatches];
 
+  diagnostics = {
+    status: finalScore >= GAME_THRESHOLD ? 'blocked_game' : 'scanned',
+    score: finalScore,
+    signals: allMatches
+  };
+
   if (finalScore > 0) {
-    console.log(`[LetSpær:Content] Scanner kørte for ${window.location.pathname}. Samlet score: ${finalScore} (Grænse: 5). Detaljer:`, allMatches);
+    LetSpaerLog.log(`[LetSpær:Content] Scanner kørte for ${window.location.pathname}. Samlet score: ${finalScore} (Grænse: ${GAME_THRESHOLD}). Detaljer:`, allMatches);
   }
 
-  if (finalScore >= 5) {
-    console.warn(`[LetSpær:Content] Blokeringsgrænse nået (Score: ${finalScore} >= 5)! Rapporterer overtrædelse.`);
-    reportViolation('game');
+  if (finalScore >= GAME_THRESHOLD) {
+    LetSpaerLog.warn(`[LetSpær:Content] Blokeringsgrænse nået (Score: ${finalScore} >= ${GAME_THRESHOLD})! Rapporterer overtrædelse.`);
+    reportViolation('game', finalScore, allMatches);
   }
 }
 
@@ -217,30 +241,9 @@ function startIframeMonitor() {
   }
 }
 
-function isSafeSchoolSite() {
-  const coreSchoolSites = [
-    'aula.dk', 'lectio.dk',
-    'drive.google.com', 'docs.google.com', 'slides.google.com', 'classroom.google.com',
-    'matematikfessor.dk', 'nota.dk', 'grammatip.com', 'ordbogen.com',
-    'skoletube.dk', 'gyldendal-uddannelse.dk', 'gyldendal.dk', 'clio.me', 'clioonline.dk', 'systime.dk',
-    'accounts.google.com', 'testogprøver.dk', 'xn--testogprver-mgb.dk', 'skoleporten.dk', 'minuddannelse.dk',
-    'restudy.dk', 'sofaskolen.dk', 'emu.dk', 'skolon.com', 'alinea.dk',
-    'meebook.com', 'easyiq.dk', 'unilogin.dk', 'mitid.dk',
-    'forms.google.com', 'sheets.google.com', 'keep.google.com',
-    'mail.google.com', 'meet.google.com', 'calendar.google.com',
-    'kahoot.com', 'quizlet.com', 'geogebra.org', 'code.org',
-    'wikipedia.org', 'dr.dk', 'denstoredanske.lex.dk', 'duda.dk'
-  ];
+function startScanning() {
+  scannerEnabled = true;
 
-  try {
-    const h = window.location.hostname.toLowerCase();
-    return coreSchoolSites.some(site => h === site || h.endsWith('.' + site));
-  } catch (e) {
-    return false;
-  }
-}
-
-if (!isSafeSchoolSite()) {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       runFastScanners();
@@ -261,3 +264,48 @@ if (!isSafeSchoolSite()) {
     runFastScanners();
   }, 7000);
 }
+
+// Undervisningstjenester (educationCsvUrl) undtages fra al automatisk analyse
+chrome.storage.local.get('educationList', (data) => {
+  const educationList = (!chrome.runtime.lastError && data && Array.isArray(data.educationList))
+    ? data.educationList
+    : [];
+
+  if (letspaerIsEducationService(window.location.href, educationList)) {
+    LetSpaerLog.log('[LetSpær:Content] Siden er en undervisningstjeneste – automatisk analyse springes over.');
+    diagnostics = { status: 'education', score: undefined, signals: [] };
+    return;
+  }
+  startScanning();
+});
+
+// =================================================
+// FEJLSØGNING: Svar LetSpær-popuppen (kun når debugLogging er slået til)
+// =================================================
+// Popuppen åbner en forbindelse til alle rammer i fanen. Hver ramme svarer med
+// sit eget resultat. Der analyseres igen lige inden, så pointene er aktuelle.
+// Iframes på denne side, der er blevet blokeret (kun i hukommelsen, kun i øverste ramme)
+let blockedFrames = [];
+chrome.runtime.onMessage.addListener((msg) => {
+  if (!msg || msg.action !== 'letspaerFrameBlocked') return;
+  if (window !== window.top || !LetSpaerLog.isEnabled()) return;
+  blockedFrames.push({ page: msg.page, status: 'blocked_iframe', score: msg.score, signals: msg.signals || [] });
+  if (blockedFrames.length > 10) blockedFrames.shift();
+});
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== 'letspaer-diagnostics') return;
+  if (!LetSpaerLog.isEnabled()) return;
+
+  if (scannerEnabled && !hasBlocked) runFastScanners();
+
+  port.postMessage({
+    page: safePageUrl(),
+    isTop: window === window.top,
+    status: diagnostics.status,
+    score: diagnostics.score,
+    signals: diagnostics.signals,
+    blockedFrames: window === window.top ? blockedFrames : []
+  });
+});
+

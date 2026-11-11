@@ -3,7 +3,10 @@
   "properties": {
     "sheetMode": {
       "type": "string",
-      "enum": ["daily", "exam"],
+      "enum": [
+        "daily",
+        "exam"
+      ],
       "description": "Vælg tilstand for blokerede websteder (daglig eller eksamen)."
     },
     "dailyCsvUrl": {
@@ -16,7 +19,10 @@
     },
     "blockedPageMode": {
       "type": "string",
-      "enum": ["internal", "external"],
+      "enum": [
+        "internal",
+        "external"
+      ],
       "description": "Vælg tilstand for blokeret side (indbygget eller ekstern)."
     },
     "blockedPageUrl": {
@@ -29,8 +35,27 @@
     },
     "aiBlockMode": {
       "type": "string",
-      "enum": ["enabled", "disabled"],
-      "description": "Vælg om AI-elementer og 'Web'-tvang på Google skal være aktivt."
+      "enum": [
+        "enabled",
+        "disabled"
+      ],
+      "description": "Vælg om AI-elementer på Google, Bing og Ecosia skal skjules, og om Googles AI-tilstand (udm=50) skal omdirigeres til almindelig søgning."
+    },
+    "educationCsvUrl": {
+      "type": "string",
+      "description": "URL til CSV-fil med tjenester, der er relevante i undervisningen og derfor undtages fra den automatiske analyse (fx spil-detektion)."
+    },
+    "debugLogging": {
+      "type": "string",
+      "enum": [
+        "enabled",
+        "disabled"
+      ],
+      "description": "Fejlsøgning til pilotforløb. 'enabled' slår logning i konsollen til, viser point og signaler på blokeringssiden og lader brugeren sende sidens pointscore via LetSpær-ikonet. Standard er 'disabled'."
+    },
+    "reportFormUrl": {
+      "type": "string",
+      "description": "Forudfyldt Google Formular-link med pladsholdere ({domain}, {url}, {status}, {score}, {signals}, {version}, {mode}, {time}, {details}). Bruges kun når debugLogging er 'enabled'."
     }
   }
 }
