@@ -18,11 +18,9 @@ function checkMainWorldGlobals() {
             window.Howl
         );
 
+        // Ingen logning her: MAIN world kan ikke læse debugLogging-indstillingen,
+        // og content_analyzer.js logger selv, hvad den modtager.
         if (hasPureGameEngine || hasMediaLib) {
-            console.log('[LetSpær:MainWorld] Opdagede globale biblioteker i window:', {
-                pureGameEngine: hasPureGameEngine,
-                mediaLib: hasMediaLib
-            });
             document.dispatchEvent(new CustomEvent('NetShieldMainProbe', {
                 detail: {
                     hasPureGameEngine: hasPureGameEngine,

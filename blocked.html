@@ -13,7 +13,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 16px 0;
+            box-sizing: border-box;
         }
 
         .container {
@@ -65,6 +67,77 @@
             margin-bottom: 4px;
         }
 
+        .debug-panel {
+            text-align: left;
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        .debug-panel[hidden] { display: none; }
+
+        .debug-panel ul {
+            margin: 6px 0 12px;
+            padding-left: 18px;
+        }
+
+        .debug-score {
+            font-size: 15px;
+            color: #f8fafc;
+            margin: 0 0 4px;
+        }
+
+        .debug-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .debug-actions a,
+        .debug-actions button {
+            flex: 1;
+            min-width: 140px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: transparent;
+            color: #f8fafc;
+            font: inherit;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .debug-actions .primary {
+            background: #38bdf8;
+            border-color: #38bdf8;
+            color: #0f172a;
+        }
+
+        .debug-actions a[hidden],
+        .debug-panel textarea[hidden] { display: none; }
+
+        .debug-panel textarea {
+            width: 100%;
+            height: 120px;
+            margin-top: 8px;
+            box-sizing: border-box;
+            background: #0f172a;
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .debug-note {
+            margin: 8px 0 0;
+            font-size: 12px;
+            color: #64748b;
+        }
+
         .divider {
             height: 1px;
             background-color: #334155;
@@ -94,6 +167,17 @@
             <span id="reasonText">---</span>
         </div>
 
+        <div id="debugPanel" class="debug-panel" hidden>
+            <p class="debug-score" id="debugScore"></p>
+            <ul id="debugSignals"></ul>
+            <div class="debug-actions">
+                <a id="debugSend" class="primary" target="_blank" rel="noopener" hidden>Send fejlmelding</a>
+                <button id="debugCopy" type="button">Kopiér tekst</button>
+            </div>
+            <textarea id="debugText" readonly hidden></textarea>
+            <p class="debug-note" id="debugNote"></p>
+        </div>
+
         <div class="divider"></div>
         
         <div class="footer">
@@ -101,45 +185,8 @@
         </div>
     </div>
 
-    <script>
-        (function() {
-            const params = new URLSearchParams(window.location.search);
-            const reason = params.get('reason');
-            const domain = params.get('domain') || params.get('url') || '';
-
-            const reasonContainer = document.getElementById('reasonContainer');
-            const reasonText = document.getElementById('reasonText');
-
-            let message = '';
-            let consoleMsg = '';
-
-            if (reason === 'csv' || reason === 'list') {
-                const target = domain ? ` ("${domain}")` : '';
-                message = `Blokeret pga. match på skolens centrale blokeringsliste (CSV)${target}.`;
-                consoleMsg = `[LetSpær] Siden er blokeret pga. match på den centrale CSV-blokeringsliste${target}.`;
-            } else if (reason === 'heuristic_game' || reason === 'game') {
-                message = `Automatisk spil-detektion: Mistænkeligt spilindhold opdaget på siden.`;
-                consoleMsg = `[LetSpær] Siden er blokeret af den heuristiske spil-scanner (score >= 5).`;
-            } else if (reason === 'iframe_game') {
-                message = `Spil-detektion i indlejret ramme (iframe).`;
-                consoleMsg = `[LetSpær] Indlejret iframe blokeret pga. spilindhold.`;
-            } else if (reason === 'ai') {
-                message = `AI-tjeneste / AI-chat er spærret i skoletiden.`;
-                consoleMsg = `[LetSpær] Siden er blokeret pga. AI-begrænsning.`;
-            } else if (reason) {
-                message = `Blokeringsregel udløst (${reason}).`;
-                consoleMsg = `[LetSpær] Siden er blokeret. Årsag: ${reason}`;
-            }
-
-            if (message) {
-                reasonText.textContent = message;
-                reasonContainer.style.display = 'block';
-            }
-
-            if (consoleMsg) {
-                console.warn(consoleMsg);
-            }
-        })();
-    </script>
+    <script src="debug.js"></script>
+    <script src="report.js"></script>
+    <script src="blocked.js"></script>
 </body>
 </html>

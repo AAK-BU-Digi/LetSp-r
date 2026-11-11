@@ -1,6 +1,6 @@
 /**
  * LetSpær V3 Core Engine - AI Cleaner Module
- * Version 1.6 - Ultra-aggressive DOM & CSS Shield for Google, Bing & Ecosia
+ * Version 1.8 - DOM & CSS Shield for Google-søgning, Bing & Ecosia
  * Powered by NetShield Technology
  * Licensed under MIT License
  */
@@ -19,7 +19,6 @@ function injectAiStyleBlock() {
   style.textContent = `
     /* Google AI Overview Containers & Wrappers */
     div[data-attrid="ai_overview"],
-    div[data-attrid="wa:/description"],
     div[jscontroller="p088N"],
     div[data-mcpr],
     div[data-md5],
@@ -53,19 +52,35 @@ function injectAiStyleBlock() {
   const target = document.head || document.documentElement;
   if (target) {
     target.appendChild(style);
-    console.log('[LetSpær:AI] CSS-skjold for AI-elementer aktiveret.');
+    LetSpaerLog.log('[LetSpær:AI] CSS-skjold for AI-elementer aktiveret.');
   }
 }
 
-function initAiBlocker() {
-  injectAiStyleBlock();
+// Kører fn højst én gang pr. 'delay' ms, uanset hvor mange DOM-ændringer der sker.
+// CSS-skjoldet skjuler de kendte elementer med det samme; denne scanning er en ekstra sikring.
+function observeDebounced(fn, delay = 150) {
+  let timer = null;
+  new MutationObserver(() => {
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = null;
+      fn();
+    }, delay);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+}
 
+function initAiBlocker() {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
 
-  const isGoogle = hostname.includes('google.');
+  // Kun Googles søgemaskine (www.google.*) – ikke Gmail, Docs, Meet, Classroom osv.
+  const isGoogle = hostname.startsWith('www.google.');
   const isBing = hostname.includes('bing.');
   const isEcosia = hostname.includes('ecosia.');
+
+  if (!isGoogle && !isBing && !isEcosia) return;
+
+  injectAiStyleBlock();
   const isImageSearch = window.location.search.includes('tbm=isch');
 
   // --- A: GOOGLE LOGIK ---
@@ -81,16 +96,13 @@ function initAiBlocker() {
             const btn = span.closest('button, a, div[role="button"]');
             if (btn && btn.style.display !== 'none') {
               btn.style.display = 'none';
-              console.log('[LetSpær:AI] Skjulte AI-knap på Google forside:', span.textContent.trim());
+              LetSpaerLog.log('[LetSpær:AI] Skjulte AI-knap på Google forside:', span.textContent.trim());
             }
           }
         }
       };
       hideFrontpageButton();
-      new MutationObserver(hideFrontpageButton).observe(document.documentElement, {
-        childList: true,
-        subtree: true
-      });
+      observeDebounced(hideFrontpageButton);
     }
 
     if (isOnSearchPage) {
@@ -111,7 +123,7 @@ function initAiBlocker() {
             ) {
               if (container.style.display !== 'none') {
                 container.style.display = 'none';
-                console.log('[LetSpær:AI] Skjulte Google AI Overview container for:', text);
+                LetSpaerLog.log('[LetSpær:AI] Skjulte Google AI Overview container for:', text);
               }
             }
           }
@@ -124,17 +136,14 @@ function initAiBlocker() {
             const btn = el.closest('div[role="listitem"], a, div[role="tab"], button');
             if (btn && btn.style.display !== 'none') {
               btn.style.display = 'none';
-              console.log('[LetSpær:AI] Skjulte AI-knap i Google menu:', text);
+              LetSpaerLog.log('[LetSpær:AI] Skjulte AI-knap i Google menu:', text);
             }
           }
         });
       };
 
       hideAllAIElements();
-      new MutationObserver(hideAllAIElements).observe(document.documentElement, {
-        childList: true,
-        subtree: true
-      });
+      observeDebounced(hideAllAIElements);
     }
   }
 
@@ -142,7 +151,7 @@ function initAiBlocker() {
   if (isBing) {
     if (pathname.includes('/copilotsearch')) {
       const q = new URLSearchParams(window.location.search).get('q') || '';
-      console.warn('[LetSpær:AI] Bing Copilot søgning detekteret – omdirigerer til standard søgning.');
+      LetSpaerLog.warn('[LetSpær:AI] Bing Copilot søgning detekteret – omdirigerer til standard søgning.');
       window.location.replace('https://www.bing.com/search?q=' + encodeURIComponent(q));
       return;
     }
@@ -152,35 +161,32 @@ function initAiBlocker() {
         const container = link.closest('li') || link;
         if (container.style.display !== 'none') {
           container.style.display = 'none';
-          console.log('[LetSpær:AI] Skjulte Bing Copilot link.');
+          LetSpaerLog.log('[LetSpær:AI] Skjulte Bing Copilot link.');
         }
       });
       document.querySelectorAll('.gs_main, #b_copilot_search_container').forEach(el => {
         if (el.style.display !== 'none') {
           el.style.display = 'none';
-          console.log('[LetSpær:AI] Skjulte Bing Copilot container.');
+          LetSpaerLog.log('[LetSpær:AI] Skjulte Bing Copilot container.');
         }
       });
       document.querySelectorAll('iframe').forEach(iframe => {
         if (iframe.src && iframe.src.includes('cpltsrchif=1')) {
-          console.log('[LetSpær:AI] Fjernede Bing Copilot iframe.');
+          LetSpaerLog.log('[LetSpær:AI] Fjernede Bing Copilot iframe.');
           iframe.remove();
         }
       });
     };
 
     hideBingAI();
-    new MutationObserver(hideBingAI).observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
+    observeDebounced(hideBingAI);
   }
 
   // --- C: ECOSIA LOGIK ---
   if (isEcosia) {
     if (pathname.includes('/ai-search') || pathname.includes('/chat')) {
       const q = new URLSearchParams(window.location.search).get('q') || '';
-      console.warn('[LetSpær:AI] Ecosia AI-sti detekteret – omdirigerer til standard søgning.');
+      LetSpaerLog.warn('[LetSpær:AI] Ecosia AI-sti detekteret – omdirigerer til standard søgning.');
       window.location.replace('https://www.ecosia.org/search?q=' + encodeURIComponent(q));
       return;
     }
@@ -191,7 +197,7 @@ function initAiBlocker() {
         const container = btn.closest('li') || btn;
         if (container.style.display !== 'none') {
           container.style.display = 'none';
-          console.log('[LetSpær:AI] Skjulte Ecosia AI knap.');
+          LetSpaerLog.log('[LetSpær:AI] Skjulte Ecosia AI knap.');
         }
       }
 
@@ -201,17 +207,14 @@ function initAiBlocker() {
         if (text.includes('Chat') || text.includes('AI')) {
           if (tab.style.display !== 'none') {
             tab.style.display = 'none';
-            console.log('[LetSpær:AI] Skjulte Ecosia AI fanebjælke.');
+            LetSpaerLog.log('[LetSpær:AI] Skjulte Ecosia AI fanebjælke.');
           }
         }
       });
     };
 
     hideEcosiaAI();
-    new MutationObserver(hideEcosiaAI).observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
+    observeDebounced(hideEcosiaAI);
   }
 }
 

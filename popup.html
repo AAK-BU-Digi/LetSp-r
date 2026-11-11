@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>LetSpær</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --ink: #1e2933;
+      --muted: #5e6b78;
+      --line: #dce2e8;
+      --track: #eef2f5;
+      --action: #0a5c8a;
+      --action-ink: #ffffff;
+      --over: #b42318;
+      --ok: #23784a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #1b2229;
+        --ink: #e8edf2;
+        --muted: #9aa7b4;
+        --line: #33404c;
+        --track: #2a343e;
+        --action: #5db0e0;
+        --action-ink: #0d1a24;
+        --over: #f97066;
+        --ok: #5cc28a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 340px;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--ink);
+      font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    #page {
+      margin: 0 0 2px;
+      font-size: 15px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+    #status { margin: 0 0 14px; color: var(--muted); }
+    #status.over { color: var(--over); }
+    #status.ok { color: var(--ok); }
+
+    .gauge { margin-bottom: 14px; }
+    .gauge[hidden] { display: none; }
+    .score {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .score strong { font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .score span { color: var(--muted); }
+    .track {
+      position: relative;
+      height: 8px;
+      border-radius: 4px;
+      background: var(--track);
+    }
+    .fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--muted);
+      width: 0;
+    }
+    .over .fill { background: var(--over); }
+    .limit {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: var(--ink);
+    }
+
+    h2 { margin: 14px 0 4px; font-size: 13px; font-weight: 600; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 2px 0; }
+    details { margin-top: 10px; }
+    summary { cursor: pointer; font-weight: 600; }
+    .frame { margin: 6px 0 0; }
+    .frame p { margin: 0; }
+    .frame .addr { word-break: break-all; }
+    .muted { color: var(--muted); }
+
+    .actions { display: flex; gap: 8px; margin-top: 16px; }
+    button {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary { background: var(--action); border-color: var(--action); color: var(--action-ink); }
+    button:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
+    button[hidden] { display: none; }
+    .note { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <p id="page">Henter …</p>
+  <p id="status"></p>
+
+  <div class="gauge" id="gauge" hidden>
+    <div class="score"><strong id="score"></strong><span id="scoreLabel"></span></div>
+    <div class="track"><div class="fill" id="fill"></div><div class="limit" id="limit"></div></div>
+  </div>
+
+  <div id="signals"></div>
+  <div id="frames"></div>
+
+  <div class="actions">
+    <button class="primary" id="send" hidden>Send fejlmelding</button>
+    <button id="copy" hidden>Kopiér tekst</button>
+  </div>
+  <p class="note" id="note"></p>
+
+  <script src="debug.js"></script>
+  <script src="report.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
