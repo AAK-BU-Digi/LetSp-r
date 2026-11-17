@@ -2,8 +2,14 @@
   "update_url": "https://clients2.google.com/service/update2/crx",
   "manifest_version": 3,
   "name": "LetSpær",
-  "version": "1.8",
-  "description": "Spærring af irrelevante sider i elevernes browser. AI+spil-filter opgraderet.",
+  "version": "1.9",
+  "description": "Blokerer forstyrrende sider, browserspil og AI-funktioner i søgemaskiner for elever. Styres af skolens it-administration.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": [
     "storage",
     "declarativeNetRequest",
@@ -16,7 +22,11 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "LetSpær"
+    "default_title": "LetSpær",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
   },
   "storage": {
     "managed_schema": "schema.json"
@@ -294,14 +304,5 @@
       "all_frames": true,
       "world": "MAIN"
     }
-  ],
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "ruleset_1",
-        "enabled": true,
-        "path": "rules.json"
-      }
-    ]
-  }
+  ]
 }

@@ -52,7 +52,7 @@ function isBlockedPageUrl(url, config) {
 function infoFromFrames(frames, tabUrl) {
   const top = frames.find(f => f.isTop);
   const interesting = frames.filter(f =>
-    !f.isTop && ((typeof f.score === 'number' && f.score > 0) || /^(blocked|ignored)/.test(f.status))
+    !f.isTop && ((typeof f.score === 'number' && f.score > 0) || /^(blocked|ignored|would_block)/.test(f.status))
   );
   // Blokerede iframes kan ikke selv svare; den øverste ramme kender dem
   const blocked = (top && Array.isArray(top.blockedFrames)) ? top.blockedFrames : [];
@@ -81,7 +81,7 @@ function render(info, report, config) {
 
   const statusEl = document.getElementById('status');
   statusEl.textContent = letspaerStatusText(info.status);
-  if (/^blocked/.test(info.status)) statusEl.className = 'over';
+  if (/^blocked|^would_block/.test(info.status)) statusEl.className = 'over';
   else if (/education/.test(info.status)) statusEl.className = 'ok';
 
   // Pointbjælke med markering ved grænsen
@@ -109,7 +109,7 @@ function render(info, report, config) {
   if (info.frames && info.frames.length) {
     const details = el('details');
     // Er en iframe blokeret, er det sandsynligvis den, brugeren undrer sig over
-    details.open = info.frames.some(f => /^blocked/.test(f.status));
+    details.open = info.frames.some(f => /^(blocked|would_block)/.test(f.status));
     details.appendChild(el('summary', `Indlejrede rammer med fund (${info.frames.length})`));
     info.frames.forEach(f => {
       const box = el('div', undefined, 'frame');

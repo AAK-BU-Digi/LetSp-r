@@ -39,7 +39,8 @@ async function getConfig() {
         'updateInterval',
         'aiBlockMode',
         'educationCsvUrl',
-        'debugLogging'
+        'debugLogging',
+        'gameDetectionMode'
       ],
       (data) => {
         if (chrome.runtime.lastError) {
@@ -567,6 +568,14 @@ async function handleViolation(message, sender) {
     return { action: 'ignore' };
   }
 
+  // Sikkerhedsnet: blokér kun, når spil-detektionen står til 'block'.
+  // (En side kan være åbnet, før tilstanden blev ændret i Admin-konsollen.)
+  const config = await getConfig();
+  if (config.gameDetectionMode === 'log' || config.gameDetectionMode === 'off') {
+    LetSpaerLog.log(`[LetSpær:BG] Blokerer ikke ${frameHost} – gameDetectionMode er '${config.gameDetectionMode}'.`);
+    return { action: 'ignore' };
+  }
+
   const isSubFrame = typeof sender.frameId === 'number' && sender.frameId > 0;
 
   // Hvis spillet ligger i en iframe på en almindelig hjemmeside (ikke Google Sites/GitHub osv.),
@@ -577,7 +586,9 @@ async function handleViolation(message, sender) {
 
     // Ved fejlsøgning får fanens øverste ramme besked, så LetSpær-popuppen kan vise,
     // hvad der blev blokeret i iframen (den blokerede iframe kan ikke selv svare).
-    if (LetSpaerLog.isEnabled() && sender.tab && sender.tab.id) {
+    // Indstillingen læses fra config og ikke fra en global variabel, da service workeren
+    // kan være genstartet lige før, og den globale værdi så ikke er indlæst endnu.
+    if (config.debugLogging === 'enabled' && sender.tab && sender.tab.id) {
       chrome.tabs.sendMessage(sender.tab.id, {
         action: 'letspaerFrameBlocked',
         page: message.page || frameHost,

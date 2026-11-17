@@ -7,6 +7,10 @@ const GAME_THRESHOLD = 5;
 
 let hasBlocked = false;
 let scannerEnabled = false; // Sættes først, når listen over undervisningstjenester er tjekket
+let scanningStarted = false;
+let isEducationService = false;
+// gameDetectionMode fra Admin-konsollen: 'block' (standard), 'log' (analyser uden at blokere) eller 'off'
+let detectionMode = 'block';
 let detectedPureGameEngine = false;
 let detectedMediaLib = false;
 
@@ -52,11 +56,27 @@ function reportViolation(reason, score, signals) {
   }
 }
 
-// Hjælpefunktion til at matche hele ord (forhindrer at fx "friv" matcher "frivillig" eller "nes" matcher "business")
-function containsWholeWord(text, word) {
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+// Matcher kun hele ord/fraser, så fx "friv" ikke matcher "frivillig" og "io games" ikke matcher "studio games".
+// Bruger Unicode-bogstaver (æ, ø, å tæller som bogstaver) og virker også for termer med tegnsætning ("1v1.lol").
+const termRegexCache = new Map();
+function containsWholeWord(text, term) {
+  if (!text) return false;
+  let regex = termRegexCache.get(term);
+  if (!regex) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    regex = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'iu');
+    termRegexCache.set(term, regex);
+  }
   return regex.test(text);
+}
+
+// URL'en gøres læsbar som tekst, så "unblocked-games-66" kan matche "unblocked games 66"
+function urlAsText(url) {
+  let decoded = url;
+  try {
+    decoded = decodeURIComponent(url);
+  } catch (e) {}
+  return decoded.toLowerCase().replace(/[-_+./?=&#:]+/g, ' ');
 }
 
 function runFastScanners() {
@@ -75,6 +95,7 @@ function runFastScanners() {
   const gameMatches = [];
   const pageTitle = (document.title || '').toLowerCase();
   const pageUrl = window.location.href.toLowerCase();
+  const urlText = urlAsText(window.location.href);
   const hostname = window.location.hostname.toLowerCase();
   const pageText = (document.body ? document.body.innerText.substring(0, 15000).toLowerCase() : '');
   const metaDesc = document.querySelector('meta[name="description"]')?.content?.toLowerCase() || '';
@@ -82,21 +103,41 @@ function runFastScanners() {
 
   const gameUrlKWs = ['unblocked games', 'games 66', 'games 77', 'games 99', 'io game', 'unblocked spil', 'gratis spil', 'free games', 'html5 game'];
   gameUrlKWs.forEach(kw => {
-    if (pageUrl.includes(kw) || pageTitle.includes(kw)) {
+    if (containsWholeWord(urlText, kw) || containsWholeWord(pageTitle, kw)) {
       gameScore += 3;
       gameMatches.push(`Spil-URL/Titel nøgleord: "${kw}" (+3)`);
     }
   });
 
-  const gameNames = ['slope', 'retro bowl', '1v1.lol', 'drift hunters', 'cookie clicker', 'subway surfers', 'flappy bird', 'tetris', 'snake game', 'crossy road', '2048', 'run 3', 'fnaf', 'geometry dash', 'moto x3m', 'happy wheels', 'basketball stars', 'shell shockers', 'krunker', 'subwaysurfers'];
+  // Entydige spilnavne: tæller i titel, sti og domæne
+  const gameNames = ['retro bowl', '1v1.lol', 'drift hunters', 'cookie clicker', 'subway surfers', 'flappy bird', 'crossy road', 'fnaf', 'geometry dash', 'moto x3m', 'happy wheels', 'basketball stars', 'shell shockers', 'krunker'];
+  // Tvetydige navne, der også er almindelige ord eller undervisningsemner ("slope" i matematik,
+  // "snake game" i programmering): tæller kun i titlen, hvis titlen også indeholder et spilord,
+  // og ellers kun i domænet – aldrig alene i stien
+  const ambiguousGameNames = ['slope', 'tetris', 'snake game', '2048', 'run 3'];
+  const gameWords = ['game', 'games', 'spil', 'play', 'unblocked'];
+
   gameNames.forEach(name => {
     const cleanName = name.replace(/\s+/g, '');
     if (containsWholeWord(pageTitle, name)) {
       gameScore += 4;
       gameMatches.push(`Spilnavn i titel: "${name}" (+4)`);
-    } else if (pageUrl.includes(cleanName) || hostname.includes(cleanName)) {
+    } else if (pageUrl.includes(cleanName) || containsWholeWord(urlText, name)) {
       gameScore += 3;
       gameMatches.push(`Spilnavn i URL/domæne: "${name}" (+3)`);
+    }
+  });
+  ambiguousGameNames.forEach(name => {
+    const cleanName = name.replace(/\s+/g, '');
+    // Spilordet skal stå uden for selve navnet ("snake game" tæller ikke som spilord i sig selv)
+    const titleWithoutName = pageTitle.split(name).join(' ');
+    const titleHasGameWord = gameWords.some(w => containsWholeWord(titleWithoutName, w));
+    if (titleHasGameWord && containsWholeWord(pageTitle, name)) {
+      gameScore += 4;
+      gameMatches.push(`Spilnavn i titel sammen med spilord: "${name}" (+4)`);
+    } else if (hostname.includes(cleanName)) {
+      gameScore += 3;
+      gameMatches.push(`Spilnavn i domæne: "${name}" (+3)`);
     }
   });
 
@@ -121,7 +162,7 @@ function runFastScanners() {
   const scriptSrcs = Array.from(document.querySelectorAll('script[src]')).map(s => s.src.toLowerCase());
 
   // Rene spil-engines i script-tags (+5 point)
-  const pureGameScripts = ['ruffle.js', 'unity.loader.js', 'unityweb', 'playcanvas', 'phaser.min.js', 'phaser.js', 'construct', 'gdjs', 'pico-8', 'gamemaker'];
+  const pureGameScripts = ['ruffle.js', 'unity.loader.js', 'unityweb', 'playcanvas', 'phaser.min.js', 'phaser.js', 'c2runtime', 'c3runtime', 'gdjs', 'pico-8', 'gamemaker'];
   pureGameScripts.forEach(gs => {
     if (scriptSrcs.some(src => src.includes(gs))) {
       gameScore += 5;
@@ -139,9 +180,9 @@ function runFastScanners() {
   });
 
   // SEO-fraser (+10 point)
-  const seoPhrases = ['unblocked games', 'free online games', 'play now for free', 'addicting games', 'io games', 'best free games', 'jogos', 'y9 games', 'y8 games', 'spil gratis onlinespil', 'play game online', 'play free games', 'browser games', 'html5 games'];
+  const seoPhrases = ['unblocked games', 'free online games', 'play now for free', 'addicting games', 'io games', 'best free games', 'y9 games', 'y8 games', 'spil gratis onlinespil', 'play game online', 'play free games', 'browser games', 'html5 games'];
   seoPhrases.forEach(phrase => {
-    if (pageTitle.includes(phrase) || metaDesc.includes(phrase) || metaKeywords.includes(phrase)) {
+    if (containsWholeWord(pageTitle, phrase) || containsWholeWord(metaDesc, phrase) || containsWholeWord(metaKeywords, phrase)) {
       gameScore += 10;
       gameMatches.push(`SEO spilfrase: "${phrase}" (+10)`);
     }
@@ -153,9 +194,13 @@ function runFastScanners() {
     gameMatches.push('Friv nøgleord opdaget (+10)');
   }
 
-  const behaviorWords = ['controls:', 'wasd', 'arrow keys', 'press spacebar', 'play fullscreen', 'click to play', 'tap to start', 'press enter to start', 'move with', 'left click to shoot'];
+  // Kun fraser, der næsten kun bruges i spil. "controls:", "arrow keys" og "move with" er fjernet,
+  // da de også står i almindelige vejledninger og simuleringer. Højst +4 i alt.
+  const behaviorWords = ['wasd', 'press spacebar', 'play fullscreen', 'click to play', 'tap to start', 'press enter to start', 'left click to shoot'];
+  let behaviorPoints = 0;
   behaviorWords.forEach(bw => {
-    if (pageText.includes(bw)) {
+    if (behaviorPoints < 4 && containsWholeWord(pageText, bw)) {
+      behaviorPoints += 2;
       gameScore += 2;
       gameMatches.push(`Styringsinstruks opdaget i tekst: "${bw}" (+2)`);
     }
@@ -218,8 +263,14 @@ function runFastScanners() {
   }
 
   if (finalScore >= GAME_THRESHOLD) {
-    LetSpaerLog.warn(`[LetSpær:Content] Blokeringsgrænse nået (Score: ${finalScore} >= ${GAME_THRESHOLD})! Rapporterer overtrædelse.`);
-    reportViolation('game', finalScore, allMatches);
+    if (detectionMode === 'block') {
+      LetSpaerLog.warn(`[LetSpær:Content] Blokeringsgrænse nået (Score: ${finalScore} >= ${GAME_THRESHOLD})! Rapporterer overtrædelse.`);
+      reportViolation('game', finalScore, allMatches);
+    } else {
+      // Logtilstand: siden ville være blevet blokeret, men får lov at køre
+      diagnostics.status = 'would_block';
+      LetSpaerLog.warn(`[LetSpær:Content] Logtilstand: siden ville være blokeret (Score: ${finalScore} >= ${GAME_THRESHOLD}).`);
+    }
   }
 }
 
@@ -243,6 +294,11 @@ function startIframeMonitor() {
 
 function startScanning() {
   scannerEnabled = true;
+  if (scanningStarted) {
+    runFastScanners();
+    return;
+  }
+  scanningStarted = true;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -265,25 +321,52 @@ function startScanning() {
   }, 7000);
 }
 
-// Undervisningstjenester (educationCsvUrl) undtages fra al automatisk analyse
-chrome.storage.local.get('educationList', (data) => {
-  const educationList = (!chrome.runtime.lastError && data && Array.isArray(data.educationList))
-    ? data.educationList
-    : [];
+function normalizeMode(value) {
+  return value === 'log' || value === 'off' ? value : 'block';
+}
 
+function applyDetectionMode(mode) {
+  detectionMode = normalizeMode(mode);
+  if (isEducationService) return;
+  if (detectionMode === 'off') {
+    scannerEnabled = false;
+    if (!hasBlocked) diagnostics = { status: 'detection_off', score: undefined, signals: [] };
+    LetSpaerLog.log('[LetSpær:Content] Spil-detektion er slået fra (gameDetectionMode = off).');
+  } else {
+    startScanning();
+  }
+}
+
+// Undervisningstjenester (educationCsvUrl) undtages fra al automatisk analyse.
+// Derefter afgør gameDetectionMode, om der analyseres, og om der blokeres.
+Promise.all([
+  new Promise((resolve) => chrome.storage.local.get('educationList', (data) => {
+    resolve((!chrome.runtime.lastError && data && Array.isArray(data.educationList)) ? data.educationList : []);
+  })),
+  new Promise((resolve) => chrome.storage.managed.get('gameDetectionMode', (data) => {
+    resolve(!chrome.runtime.lastError && data ? data.gameDetectionMode : undefined);
+  }))
+]).then(([educationList, mode]) => {
   if (letspaerIsEducationService(window.location.href, educationList)) {
+    isEducationService = true;
     LetSpaerLog.log('[LetSpær:Content] Siden er en undervisningstjeneste – automatisk analyse springes over.');
     diagnostics = { status: 'education', score: undefined, signals: [] };
     return;
   }
-  startScanning();
+  applyDetectionMode(mode);
+});
+
+// Ændres gameDetectionMode i Admin-konsollen, slår det igennem på åbne sider
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'managed' && changes.gameDetectionMode) {
+    applyDetectionMode(changes.gameDetectionMode.newValue);
+  }
 });
 
 // =================================================
 // FEJLSØGNING: Svar LetSpær-popuppen (kun når debugLogging er slået til)
 // =================================================
-// Popuppen åbner en forbindelse til alle rammer i fanen. Hver ramme svarer med
-// sit eget resultat. Der analyseres igen lige inden, så pointene er aktuelle.
+
 // Iframes på denne side, der er blevet blokeret (kun i hukommelsen, kun i øverste ramme)
 let blockedFrames = [];
 chrome.runtime.onMessage.addListener((msg) => {
@@ -293,6 +376,8 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (blockedFrames.length > 10) blockedFrames.shift();
 });
 
+// Popuppen åbner en forbindelse til alle rammer i fanen. Hver ramme svarer med
+// sit eget resultat. Der analyseres igen lige inden, så pointene er aktuelle.
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'letspaer-diagnostics') return;
   if (!LetSpaerLog.isEnabled()) return;

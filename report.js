@@ -9,6 +9,8 @@ const LETSPAER_STATUS_TEXT = {
   blocked_game: 'Blokeret af spil-detektionen',
   blocked_iframe: 'Indlejret indhold blokeret af spil-detektionen',
   scanned: 'Analyseret – ikke blokeret',
+  would_block: 'Ville være blokeret – spil-detektionen er i logtilstand',
+  detection_off: 'Spil-detektionen er slået fra',
   ignored_education: 'Over grænsen, men undtaget som undervisningstjeneste',
   education: 'Undervisningstjeneste – analyseres ikke',
   small_iframe: 'Lille ramme – analyseres ikke',

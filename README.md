@@ -20,6 +20,12 @@ Når din extension er blevet udgivet, skal du tildele den til brugerne i Googles
 
   Der er ingen indbygget liste i koden. Filen undervisningstjenester-start.csv indeholder de skoletjenester, som tidligere var indbygget, og kan indsættes direkte i jeres ark.
 
+  "gameDetectionMode": "block" (standard), "log" eller "off". Styrer den automatiske spil-detektion:
+    - "block" blokerer sider over grænsen (5 point).
+    - "log" analyserer uden at blokere. Med debugLogging viser LetSpær-ikonet "Ville være blokeret", så en ny version af detektionen kan afprøves uden at forstyrre undervisningen.
+    - "off" slår analysen helt fra. Bruges som nødbremse, hvis detektionen blokerer noget vigtigt; virker på få minutter uden ny version i Chrome Web Store.
+  Blokeringslisten og AI-blokeringen påvirkes ikke af denne indstilling.
+
   "debugLogging": "enabled" eller "disabled" (standard). Til pilotforløb. Når den er slået til:
     - LetSpær logger i Chromes konsol (ellers logges kun fejl).
     - Blokeringssiden viser point og signaler med knapperne "Send fejlmelding" og "Kopiér tekst".
@@ -74,3 +80,10 @@ Særligt for undervisningstjenester (educationCsvUrl)
   Undtagelsen gælder både når tjenesten åbnes direkte, når den er indlejret (iframe) på en anden side, og for alt der er indlejret på tjenesten.
 
   På en ny enhed gælder undtagelserne først, når listen er hentet første gang (normalt inden for få sekunder efter installation). Fejler hentningen senere, bruges den sidst hentede liste.
+
+Udgivelse i Chrome Web Store
+
+  Byg pakken med ./package.sh fra repoets rod (virker i Git Bash, macOS, Linux og Google Cloud Shell). Kun de filer, Chrome bruger, kommer med. Scriptet stopper, hvis manifest.json henviser til en fil, der mangler, og advarer, hvis der ligger kodefiler i repoet, som ikke er med i pakken. Nye filer skal tilføjes listen i scriptet.
+
+  CHROMEWEBSTORE.md samler alt, der skal udfyldes i Chrome Web Stores udviklerkonsol: beskrivelser, formål, begrundelse for hver rettighed og svar om dataforbrug. Opdatér den sammen med privatlivspolitikken (Privacy), når rettigheder eller dataforbrug ændres.
+

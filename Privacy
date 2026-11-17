@@ -1,33 +1,42 @@
-**User Privacy Policy for LetSpær**
+**Privacy Policy for LetSpær**
 
-**Effective Date:** 10-04-2025
+**Effective Date:** [DD-MM-YYYY]
 
-This privacy policy describes how the LetSpær Chrome extension ("the Extension") collects, uses, and protects user data.
+This privacy policy describes how the LetSpær Chrome extension ("the Extension") handles data. The Extension is installed and configured centrally by a school's IT administration through the Google Admin console. It helps students focus in class by blocking distracting websites, browser games and AI features in search engines.
 
-**1. Data Collection and Use:**
+**1. What the Extension does on the device**
 
-The Extension primarily functions to block access to specified websites based on lists retrieved from publicly accessible CSV files. The Extension does not directly collect personal or sensitive user data.
+* **Page addresses and page content:** To recognise browser game sites, the Extension analyses the address, title and content of the pages a student opens. This analysis takes place only on the student's device. Page content is not stored and is not sent anywhere, except as described in section 3.
+* **Data stored on the device:** The Extension stores its blocking rules, the list of approved educational services provided by the administrator, and the time of the last list update. It does not store browsing history, page content or information about the student.
+* **Configuration:** Settings such as list addresses and blocking modes are set by the school's administrator in the Google Admin console. They are not collected from students.
 
-* **Website Blocking Lists:** The Extension retrieves website blocking lists from CSV files hosted at URLs configured through Google Admin console. These CSV files are publicly accessible and do not contain personal user data.
-* **Configuration Data:** The Extension stores configuration data, such as CSV file URLs and blocking mode, through Google Admin console. This data is managed by the organization's administrator and is not directly collected from individual users.
-* **URL Handling:** The Extension processes URLs to determine if they should be blocked. While URLs may contain information about user browsing activity, the Extension does not store or transmit this data beyond the necessary processing for website blocking.
+**2. Lists fetched by the Extension**
 
-**2. Data Storage:**
+The Extension regularly fetches a block list and a list of approved educational services from addresses set by the administrator (for example a published Google Sheets file). These requests do not include any information about the student or the pages the student has visited. As with any web request, the server receiving the request can see the device's network address.
 
-The Extension does not store personal or sensitive user data locally or remotely. Configuration data is stored and managed through Google Admin console.
+**3. Data that can leave the device**
 
-**3. Data Sharing:**
+* **Blocked page explanation:** When a site is blocked, the Extension shows a page explaining why. If the administrator has chosen to use the school's own external block page, the host name of the blocked site (for example "example.com") is sent to that page. The full address, including search terms and other parameters, is never sent.
+* **Error reports during a pilot:** Only when the administrator has turned on troubleshooting, a user can choose to send an error report about a page. The report is sent to a Google Form operated by the school and contains: the page address without parameters, whether and why the page was blocked, the analysis score and the signals found, the Extension's version and mode, and the time. The Extension adds no information about the user. A report is only sent when the user actively presses "Send fejlmelding".
 
-The Extension does not share user data with third parties.
+The Extension contains no analytics, tracking or advertising, and sends no other data.
 
-**4. Security:**
+**4. Third-party services**
 
-The Extension implements reasonable security measures to protect data from unauthorized access, use, or disclosure. However, no method of transmission over the Internet or method of electronic storage is 100% secure.
+The administrator may host the lists and the error report form on Google services (Google Sheets and Google Forms). Their handling of data is covered by Google's privacy policy: https://policies.google.com/privacy
 
-**5. Changes to This Privacy Policy:**
+**5. Data sharing**
 
-We may update this privacy policy from time to time. We will notify you of any changes by posting the new privacy policy on this page.
+The Extension does not sell or share data with third parties.
 
-**6. Contact Us:**
+**6. Retention and deletion**
+
+Data stored by the Extension on the device is deleted when the Extension is removed. Error reports are kept by the school according to its own retention rules.
+
+**7. Changes to this privacy policy**
+
+We may update this privacy policy when the Extension changes. The updated policy will be published at this address with a new effective date.
+
+**8. Contact**
 
 If you have any questions about this privacy policy, please contact us at digitalisering@mbu.aarhus.dk.

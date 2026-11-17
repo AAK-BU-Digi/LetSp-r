@@ -56,6 +56,15 @@
     "reportFormUrl": {
       "type": "string",
       "description": "Forudfyldt Google Formular-link med pladsholdere ({domain}, {url}, {status}, {score}, {signals}, {version}, {mode}, {time}, {details}). Bruges kun når debugLogging er 'enabled'."
+    },
+    "gameDetectionMode": {
+      "type": "string",
+      "enum": [
+        "block",
+        "log",
+        "off"
+      ],
+      "description": "Automatisk spil-detektion. 'block' (standard) blokerer sider over grænsen. 'log' analyserer uden at blokere; med debugLogging viser LetSpær-ikonet 'Ville være blokeret'. 'off' slår analysen helt fra. Ændringer slår igennem på åbne sider uden ny version."
     }
   }
 }

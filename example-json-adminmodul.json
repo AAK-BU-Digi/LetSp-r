@@ -7,6 +7,7 @@
   "updateInterval": { "Value": 3600000 },
   "aiBlockMode": { "Value": "enabled" },
   "educationCsvUrl": { "Value": "https://docs.google.com/spreadsheets/d/DinURLHer..." },
+  "gameDetectionMode": { "Value": "block" },
   "debugLogging": { "Value": "disabled" },
   "reportFormUrl": { "Value": "https://docs.google.com/forms/d/e/DinFormular.../viewform?usp=pp_url&entry.111={domain}&entry.222={score}&entry.333={details}" }
 }
