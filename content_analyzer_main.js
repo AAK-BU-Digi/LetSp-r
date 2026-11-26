@@ -21,7 +21,7 @@ function checkMainWorldGlobals() {
         // Ingen logning her: MAIN world kan ikke læse debugLogging-indstillingen,
         // og content_analyzer.js logger selv, hvad den modtager.
         if (hasPureGameEngine || hasMediaLib) {
-            document.dispatchEvent(new CustomEvent('NetShieldMainProbe', {
+            document.dispatchEvent(new CustomEvent('LetSpaerMainProbe', {
                 detail: {
                     hasPureGameEngine: hasPureGameEngine,
                     hasMediaLib: hasMediaLib

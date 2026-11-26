@@ -12,7 +12,7 @@ Når din extension er blevet udgivet, skal du tildele den til brugerne i Googles
 
   "blockedPageUrl": Ved brug af External, angives adressen her.
   
-  "updateInterval": Hvor ofte skal CSV-filerne hentes, i Milisekunder (MS). 
+  "updateInterval": Hvor ofte skal CSV-filerne hentes, i millisekunder: 300000 = 5 minutter, 600000 = 10 minutter, 1800000 = 30 minutter (standard). Med mange tusinde enheder bør intervallet ikke være for kort, da hver opdatering henter listerne fra Google Sheets.
 
   "aiBlockMode": Brug automatisk logik, som blokkerer for AI-tilstand på Googles søgemaskine.
 
@@ -25,6 +25,8 @@ Når din extension er blevet udgivet, skal du tildele den til brugerne i Googles
     - "log" analyserer uden at blokere. Med debugLogging viser LetSpær-ikonet "Ville være blokeret", så en ny version af detektionen kan afprøves uden at forstyrre undervisningen.
     - "off" slår analysen helt fra. Bruges som nødbremse, hvis detektionen blokerer noget vigtigt; virker på få minutter uden ny version i Chrome Web Store.
   Blokeringslisten og AI-blokeringen påvirkes ikke af denne indstilling.
+
+  "refreshNow": Nødknap. Når værdien ændres (fx til dags dato og klokkeslæt: "2026-11-26 09:15"), henter alle enheder listerne igen inden for 30–90 sekunder efter at have modtaget politikken, i stedet for at vente på updateInterval. Bruges fx når en fejl i blokeringslisten skal rettes hurtigt. Hvor hurtigt politikken når frem, afhænger af Chrome. Google opdaterer desuden selv publicerede ark med nogle minutters forsinkelse, så ret arket først og vent et par minutter, før refreshNow ændres.
 
   "debugLogging": "enabled" eller "disabled" (standard). Til pilotforløb. Når den er slået til:
     - LetSpær logger i Chromes konsol (ellers logges kun fejl).
@@ -63,7 +65,9 @@ Format for adresser i CSV-filen
   youtube.com/shorts    Blokerer kun den angivne sti
   temu.*/da             Blokerer stien på alle topdomæner
 
-  http://, https:// og www. fjernes automatisk, og æ, ø og å i domæner oversættes automatisk. Stjerner andre steder (fx *spil*) understøttes ikke og springes over.
+  http://, https:// og www. fjernes automatisk, og æ, ø og å i domæner oversættes automatisk. Blokeringen gælder både http og https. Stjerner andre steder (fx *spil*) understøttes ikke og springes over.
+
+  Adresser med parametre (?…) eller fragment (#…) springes over og logges som fejl i service workerens konsol. En regel kan ikke matche parametre præcist, og at fjerne dem ville gøre reglen bredere end tiltænkt: google.com/search?udm=50 ville blive til google.com/search og blokere alle søgninger. Skriv domænet eller stien uden parametre. (Googles AI-tilstand, udm=50, håndteres i forvejen af aiBlockMode.)
 
   Fejler hentningen af CSV-filen, eller returnerer Google en HTML-side (fx fordi arket er afpubliceret), beholdes de eksisterende blokeringer. En tom liste fjerner alle CSV-blokeringer.
 

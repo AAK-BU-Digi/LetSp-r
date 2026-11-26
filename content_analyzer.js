@@ -26,7 +26,7 @@ function safePageUrl() {
 }
 
 // Lyt efter signaler fra content_analyzer_main.js (kun opgradering til true er mulig)
-document.addEventListener('NetShieldMainProbe', (e) => {
+document.addEventListener('LetSpaerMainProbe', (e) => {
   if (e.detail?.hasPureGameEngine) detectedPureGameEngine = true;
   if (e.detail?.hasMediaLib) detectedMediaLib = true;
   if (scannerEnabled) runFastScanners();
@@ -110,11 +110,13 @@ function runFastScanners() {
   });
 
   // Entydige spilnavne: tæller i titel, sti og domæne
-  const gameNames = ['retro bowl', '1v1.lol', 'drift hunters', 'cookie clicker', 'subway surfers', 'flappy bird', 'crossy road', 'fnaf', 'geometry dash', 'moto x3m', 'happy wheels', 'basketball stars', 'shell shockers', 'krunker'];
+  const gameNames = ['eaglercraft', 'retro bowl', '1v1.lol', 'drift hunters', 'cookie clicker', 'subway surfers', 'flappy bird', 'crossy road', 'fnaf', 'geometry dash', 'moto x3m', 'happy wheels', 'basketball stars', 'shell shockers', 'krunker'];
   // Tvetydige navne, der også er almindelige ord eller undervisningsemner ("slope" i matematik,
-  // "snake game" i programmering): tæller kun i titlen, hvis titlen også indeholder et spilord,
-  // og ellers kun i domænet – aldrig alene i stien
-  const ambiguousGameNames = ['slope', 'tetris', 'snake game', '2048', 'run 3'];
+  // "snake game" i programmering, "minecraft" i Minecraft Education): tæller kun i titlen, hvis
+  // titlen også indeholder et spilord, og ellers kun i domænet – aldrig alene i stien.
+  // OBS: education.minecraft.net skal stå på listen over undervisningstjenester (educationCsvUrl),
+  // ellers giver domæne-reglen også den +3.
+  const ambiguousGameNames = ['slope', 'tetris', 'snake game', '2048', 'run 3', 'minecraft'];
   const gameWords = ['game', 'games', 'spil', 'play', 'unblocked'];
 
   gameNames.forEach(name => {

@@ -7,6 +7,7 @@
   "updateInterval": { "Value": 1800000 },
   "aiBlockMode": { "Value": "enabled" },
   "educationCsvUrl": { "Value": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTaR0Dixti0EuuFfsaLUeJPlqKTk4uTQPbTiyiq4rrmVnuYSfsghNaG_1eSM7PBMrkV-jjNzh7wuQBz/pub?gid=306705272&single=true&output=csv" },
+  "gameDetectionMode": { "Value": "block" },
   "debugLogging": { "Value": "enabled" },
   "reportFormUrl": { "Value": "https://docs.google.com/forms/d/e/1FAIpQLSdl0_7f058z5sMKLXoRi0mIJQcly75VAPxxUn270B3veM6lhw/viewform?usp=pp_url&entry.1555417402={domain}&entry.982145308={url}&entry.492935860={status}&entry.1596500035={score}&entry.2111218478={signals}&entry.913197576={version}&entry.1554224150={mode}&entry.1860004858={details}" }
 }

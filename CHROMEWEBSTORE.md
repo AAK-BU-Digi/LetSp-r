@@ -1,6 +1,6 @@
 # Chrome Web Store – LetSpær
 
-> Sidst opdateret: 2026-11-14 (version 1.9)
+> Sidst opdateret: 2026-11-26 (version 1.11)
 >
 > Ét sted til alt, der skal udfyldes i Chrome Web Stores udviklerkonsol. Opdatér filen, når
 > rettigheder, dataforbrug eller funktioner ændres. Filen kommer ikke med i pakken (se `package.sh`).
@@ -134,7 +134,9 @@ Skal andre kommuner kunne installere selve udvidelsen og ikke kun bruge jeres li
 
 | Version | Dato | Ændringer | Status |
 |---|---|---|---|
-| 1.9 | **[bekræft]** | Indeholder 1.8. Wildcards, samlet domæneregel (ingen grænse på 5.000), spredte opdateringer, undervisningstjenester fra CSV, fejlsøgning til pilot (`debugLogging`, `reportFormUrl`), `gameDetectionMode`, færre falske spilblokeringer, AI-tilstand omdirigeres, ikoner, kun værtsnavn til blokeringssiden | Udkast |
+| 1.11 | **[bekræft]** | Adresser med ? eller # i listerne springes over i stedet for at blive gjort bredere. Ny politik refreshNow tvinger enhederne til at hente listerne. Politikændringer hentes spredt over 30–90 sekunder | Udkast |
+| 1.10 | **[bekræft]** | Spil-detektionen genkender Minecraft (tvetydigt navn: titel med spilord eller domæne) og Eaglercraft. Tidligere projektnavn fjernet fra blokeringssiden og koden | Udkast |
+| 1.9 | **[bekræft]** | Indeholder 1.8. Wildcards, samlet domæneregel (ingen grænse på 5.000), spredte opdateringer, undervisningstjenester fra CSV, fejlsøgning til pilot (`debugLogging`, `reportFormUrl`), `gameDetectionMode`, færre falske spilblokeringer, AI-tilstand omdirigeres, ikoner, kun værtsnavn til blokeringssiden | Publiceret til test **[bekræft]** |
 | 1.7 | **[bekræft]** | | Publiceret |
 
 ## Noter til gennemgang

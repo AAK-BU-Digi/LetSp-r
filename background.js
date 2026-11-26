@@ -8,6 +8,8 @@ const DEFAULT_UPDATE_INTERVAL_MS = 1800000; // 30 minutter default
 const ALARM_NAME = 'letspaer_update_rules';
 const JITTER_ALARM_NAME = 'letspaer_jittered_update';
 const JITTER_MAX_MINUTES = 5;      // Spred opdateringer ud over op til 5 minutter efter opstart
+const POLICY_ALARM_NAME = 'letspaer_policy_update';
+const POLICY_JITTER_MAX_MINUTES = 1; // Efter en politikændring: hent listerne inden for 30–90 sekunder
 const LATE_ALARM_THRESHOLD_MS = 2 * 60000;
 
 // Faste ID-intervaller, så reglerne aldrig kolliderer
@@ -113,6 +115,7 @@ function firstCsvField(line) {
 //   zalando.*           -> zalando.dk, zalando.de, zalando.co.uk osv. (+ subdomæner)
 //   youtube.com/shorts  -> kun den sti
 //   zalando.*/sale      -> stien på alle zalando-domæner
+// Adresser med parametre (?…) eller fragment (#…) springes over, se nedenfor.
 // Returnerer null for ugyldige linjer (fx overskrifter).
 function parseEntry(raw) {
   let s = raw.replace(/["']/g, '').trim().toLowerCase();
@@ -121,7 +124,11 @@ function parseEntry(raw) {
   s = s.replace(/^https?:\/\//, '');
   s = s.replace(/^\*\./, '');
   s = s.replace(/^www\./, '');
-  s = s.replace(/[?#].*$/, '');   // Forespørgsel og fragment giver ikke mening i en blokeringsregel
+  // En regel kan ikke matche parametre præcist, og at fjerne dem ville gøre reglen BREDERE end
+  // tiltænkt: google.com/search?udm=50 ville blive til google.com/search, altså alle søgninger.
+  // Derfor springes sådanne adresser over. Et tomt "?" eller "#" til sidst er ufarligt og fjernes.
+  s = s.replace(/[?#]+$/, '');
+  if (/[?#]/.test(s)) return { unsupported: true };
   s = s.replace(/\/+$/, '');
 
   let wildcardTld = false;
@@ -182,6 +189,7 @@ function parseCsv(text, label) {
   const entries = [];
   const seen = new Set();
   const skipped = [];
+  const withParams = [];
 
   for (const line of text.split(/\r?\n/)) {
     const cell = firstCsvField(line.trim());
@@ -189,6 +197,10 @@ function parseCsv(text, label) {
     for (const raw of cell.split(/[\s,;]+/)) {
       if (!raw) continue;
       const entry = parseEntry(raw);
+      if (entry && entry.unsupported) {
+        withParams.push(raw);
+        continue;
+      }
       if (!entry) {
         skipped.push(raw);
         continue;
@@ -201,6 +213,10 @@ function parseCsv(text, label) {
     }
   }
 
+  // Logges altid (også uden debugLogging), da det er en fejl i listen, som administratoren skal rette
+  if (withParams.length > 0) {
+    LetSpaerLog.error(`[LetSpær:BG] ${label}: ${withParams.length} adresse(r) indeholder ? eller # og er sprunget over. Skriv domænet eller stien uden parametre:`, withParams.slice(0, 20));
+  }
   if (skipped.length > 0) {
     LetSpaerLog.log(`[LetSpær:BG] ${label}: Sprang ${skipped.length} linje(r) over, som ikke er gyldige adresser:`, skipped.slice(0, 20));
   }
@@ -445,16 +461,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       return;
     }
     updateRules();
-  } else if (alarm.name === JITTER_ALARM_NAME) {
+  } else if (alarm.name === JITTER_ALARM_NAME || alarm.name === POLICY_ALARM_NAME) {
     updateRules();
   }
 });
 
-// Lyt efter live-ændringer i Google Admin Console
+// Lyt efter live-ændringer i Google Admin Console (også refreshNow, som kun findes for at
+// kunne udløse en opdatering). Listerne hentes inden for 30–90 sekunder, så tusindvis af
+// enheder, der får den nye politik samtidig, ikke rammer Google Sheets i samme sekund.
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'managed') {
-    LetSpaerLog.log('[LetSpær:BG] Ændringer registreret i managed storage – opdaterer regler og alarm.');
-    updateRules();
+    LetSpaerLog.log('[LetSpær:BG] Ændringer registreret i managed storage – henter listerne inden for 30–90 sekunder.');
+    chrome.alarms.create(POLICY_ALARM_NAME, {
+      delayInMinutes: 0.5 + Math.random() * POLICY_JITTER_MAX_MINUTES
+    });
     ensureAlarm();
     updateActionPopup();
   }

@@ -65,6 +65,10 @@
         "off"
       ],
       "description": "Automatisk spil-detektion. 'block' (standard) blokerer sider over grænsen. 'log' analyserer uden at blokere; med debugLogging viser LetSpær-ikonet 'Ville være blokeret'. 'off' slår analysen helt fra. Ændringer slår igennem på åbne sider uden ny version."
+    },
+    "refreshNow": {
+      "type": "string",
+      "description": "Nødknap: Ændr værdien (fx til dags dato og klokkeslæt), så henter alle enheder listerne igen inden for 30–90 sekunder efter at have modtaget politikken, i stedet for at vente på updateInterval."
     }
   }
 }

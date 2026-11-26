@@ -1,11 +1,9 @@
 /**
- * LetSpær V3 Core Engine - AI Cleaner Module
- * Version 1.8 - DOM & CSS Shield for Google-søgning, Bing & Ecosia
- * Powered by NetShield Technology
+ * LetSpær – AI-filter for Google-søgning, Bing & Ecosia
  * Licensed under MIT License
  */
 
-const NETSHIELD_CONFIG = {
+const AI_BLOCK_CONFIG = {
   buttonTexts: ['AI-tilstand', 'AI Mode', 'AI-Modus', 'KI-Modus', 'Chat', 'Copilot'],
   overviewTexts: ['AI-oversigt', 'AI Overview', 'AI-Übersicht', 'KI-Übersicht', 'AI Overviews']
 };
@@ -92,7 +90,7 @@ function initAiBlocker() {
       const hideFrontpageButton = () => {
         const spans = document.querySelectorAll('span');
         for (const span of spans) {
-          if (NETSHIELD_CONFIG.buttonTexts.includes(span.textContent.trim())) {
+          if (AI_BLOCK_CONFIG.buttonTexts.includes(span.textContent.trim())) {
             const btn = span.closest('button, a, div[role="button"]');
             if (btn && btn.style.display !== 'none') {
               btn.style.display = 'none';
@@ -112,7 +110,7 @@ function initAiBlocker() {
         const headings = document.querySelectorAll('h1, h2, div[role="heading"], span, div');
         headings.forEach(el => {
           const text = el.textContent ? el.textContent.trim() : '';
-          if (NETSHIELD_CONFIG.overviewTexts.some(ot => text === ot || text.startsWith(ot))) {
+          if (AI_BLOCK_CONFIG.overviewTexts.some(ot => text === ot || text.startsWith(ot))) {
             const container = el.closest('div[data-attrid], div[data-mcpr], div[jscontroller], div[data-hveid], div[data-async-context]');
             if (
               container &&
@@ -132,7 +130,7 @@ function initAiBlocker() {
         // 2. Skjul AI-knapper i topmenuen og søgefiltre
         document.querySelectorAll('span, div[role="tab"], a, div[role="listitem"]').forEach(el => {
           const text = (el.textContent || '').trim();
-          if (NETSHIELD_CONFIG.buttonTexts.includes(text)) {
+          if (AI_BLOCK_CONFIG.buttonTexts.includes(text)) {
             const btn = el.closest('div[role="listitem"], a, div[role="tab"], button');
             if (btn && btn.style.display !== 'none') {
               btn.style.display = 'none';
